@@ -1,3 +1,5 @@
+// Modified by andrejem (2026): optional action icon (e.g. delete) on tiles
+
 import React from "react";
 import HaIconButton from "./hass/building_blocks/HaIconButton";
 
@@ -9,6 +11,9 @@ export const PresetTile :React.FunctionComponent<{
 
     onFavClick?: (name: string) => void
     isFav?: boolean
+
+    actionIcon?: string
+    onActionClick?: (name: string) => void
 }> = ({
     id,
     name,
@@ -16,7 +21,10 @@ export const PresetTile :React.FunctionComponent<{
     onClick,
 
     onFavClick,
-    isFav
+    isFav,
+
+    actionIcon,
+    onActionClick
 }): React.JSX.Element => {
     // These two variables are _somehow_ required because without the change in key, the icon won't change even though we get rerendered ??
     const favedIcon = <HaIconButton
@@ -47,6 +55,23 @@ export const PresetTile :React.FunctionComponent<{
                 onClick?.(id);
             }}
         >
+            {
+                actionIcon && onActionClick &&
+                <div
+                    className={"tile-top-icon-container"}
+                >
+                    <HaIconButton
+                        key={"id_action"}
+                        icon={actionIcon}
+                        onClick={() => {
+                            onActionClick(id);
+                        }}
+
+                        size={28}
+                        iconSize={24}
+                    />
+                </div>
+            }
             {
                 onFavClick &&
                 <div

@@ -167,3 +167,119 @@ stop_dynamic_scenes_for_targets:
 stop_all_dynamic_scenes:
   name: "Stop all dynamic scenes"
   description: Stops all currently running dynamic scenes
+
+save_scene:
+  name: "Save scene"
+  description: Save a preset together with targets and settings as a reusable scene. Creates a scene entity.
+  fields:
+    id:
+      name: ID
+      description: "Optional. ID of an existing saved scene to overwrite"
+      selector:
+        text: null
+    name:
+      name: Name
+      description: "Name of the saved scene"
+      required: true
+      example: "Living room evening"
+      selector:
+        text: null
+    preset_id:
+      name: "Preset"
+      description: "The preset ID to use"
+      required: true
+      selector:
+        text: null
+    targets:
+      name: "Targets"
+      description: "Lights to apply the preset to"
+      required: true
+      selector:
+        target:
+          entity:
+            domain:
+              - light
+              - group
+    dynamic:
+      name: "Dynamic"
+      description: "Start a dynamic scene instead of applying the preset once"
+      selector:
+        boolean:
+    brightness:
+      name: "Brightness"
+      selector:
+        number:
+          min: 0
+          max: 255
+    transition:
+      name: "Transition"
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+    shuffle:
+      name: "Shuffle"
+      selector:
+        boolean:
+    smart_shuffle:
+      name: "Smart shuffle"
+      selector:
+        boolean:
+    interval:
+      name: "Interval"
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+    interval_min:
+      name: "Interval min (per light)"
+      selector:
+        number:
+          min: 1
+          max: 600
+          unit_of_measurement: seconds
+    interval_max:
+      name: "Interval max (per light)"
+      selector:
+        number:
+          min: 1
+          max: 600
+          unit_of_measurement: seconds
+    transition_min:
+      name: "Transition min (per light)"
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+    transition_max:
+      name: "Transition max (per light)"
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+
+delete_saved_scene:
+  name: "Delete saved scene"
+  description: Delete a saved scene and its scene entity
+  fields:
+    id:
+      name: ID
+      description: "ID of the saved scene"
+      required: true
+      selector:
+        text: null
+
+activate_saved_scene:
+  name: "Activate saved scene"
+  description: Activate a saved scene (same as turning on its scene entity)
+  fields:
+    id:
+      name: ID
+      description: "ID of the saved scene"
+      required: true
+      selector:
+        text: null

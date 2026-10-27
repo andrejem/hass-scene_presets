@@ -15,6 +15,8 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
 - `custom_components/scene_presets/` - the integration (Python, no external requirements)
   - `__init__.py` - service registration and schemas
   - `dynamic_scenes.py` - dynamic scene engine (endless loops applying shuffled presets)
+  - `saved_scenes.py` - persistent saved scenes (HA storage) and mapping to service calls (fork)
+  - `scene.py` - scene platform, one entity per saved scene (fork)
   - `presets.py` - applies a preset to a list of light entities
   - `color_management.py`, `color_temperature.py` - color selection and CT fallback
   - `view.py`, `websocket_api.py` - panel registration, static assets, websocket commands
@@ -39,6 +41,12 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
 - Pure documentation changes may be committed directly to `master`; code changes go through a
   feature branch and a pull request.
 - The maintainer runs `git push` himself. Do not push.
+
+## Frontend notes
+
+- Custom elements receive props as JS properties (React 19), not as HTML attributes. Selectors such as
+  `ha-icon[icon=...]` do not match; query the `icon` property instead.
+- `mwc-button` is no longer rendered by Home Assistant 2026.x. Use plain styled `<button>` elements.
 
 ## Building the panel
 
