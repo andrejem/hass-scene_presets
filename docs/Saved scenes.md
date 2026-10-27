@@ -10,9 +10,11 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 
 ## Panel
 
-1. Select targets and tunables, then tap a preset tile. This applies the preset (or starts the dynamic scene).
-2. Click the **save** icon (floppy disk) at the top right, enter a name and confirm.
-3. The scene shows up under **My scenes**. Tap the tile to activate it, use the trash icon to delete it.
+1. Select targets and tunables (Dynamic, Per-light timing, brightness, ...).
+2. Click the **save** icon (floppy disk) at the top right.
+3. Pick the preset (defaults to the last tapped one), enter a name and click **Save**.
+   The current targets and tunables are stored with it.
+4. The scene shows up under **My scenes**. Tap the tile to activate it, use the trash icon to delete it.
 
 ## Services
 

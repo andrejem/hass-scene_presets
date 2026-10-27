@@ -41,6 +41,17 @@ const DIALOG_BUTTON_STYLE: React.CSSProperties = {
     color: "var(--primary-color, #03a9f4)"
 };
 
+const DIALOG_INPUT_STYLE: React.CSSProperties = {
+    width: "100%",
+    boxSizing: "border-box",
+    padding: "0.75rem",
+    fontSize: "1rem",
+    borderRadius: "4px",
+    border: "1px solid var(--divider-color, #888)",
+    background: "var(--card-background-color, transparent)",
+    color: "var(--primary-text-color, inherit)"
+};
+
 const DYNAMIC_SCENE_REFRESH_INTERVAL = 30*1000;
 
 export const Switch :React.FunctionComponent<{
@@ -226,6 +237,7 @@ export const PresetApplyPage: React.FunctionComponent<{
     const [saveDialogOpen, setSaveDialogOpen] = useState<boolean>(false);
     const [saveSceneName, setSaveSceneName] = useState<string>("");
     const [saveSceneError, setSaveSceneError] = useState<string>("");
+    const [savePresetId, setSavePresetId] = useState<string>("");
     const [lastActionPayload, setLastActionPayload] = useState<any>({});
     const [prettyLastActionPayload, setPrettyLastActionPayload] = useState<string>("");
 
@@ -261,70 +273,8 @@ export const PresetApplyPage: React.FunctionComponent<{
         setDynamicSceneIds
     ]);
 
-    const fetchSavedScenes = React.useCallback(() => {
-        hass.callWS({
-            type: "scene_presets/get_saved_scenes",
-        }).then(result => {
-            setSavedScenes(result?.saved_scenes ?? []);
-        }).catch(() => {
-            /* intentional */
-        });
-    }, [hass, setSavedScenes]);
-
-    const handleSaveScene = React.useCallback(() => {
-        const name = saveSceneName.trim();
-        if (!name || !lastActionPayload?.service) {
-            return;
-        }
-
-        const payload = {
-            ...lastActionPayload.data,
-            name: name,
-            dynamic: lastActionPayload.service === "scene_presets.start_dynamic_scene"
-        };
-        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
-
-        hass.callService("scene_presets", "save_scene", payload).then(() => {
-            setSaveDialogOpen(false);
-            setSaveSceneName("");
-            setSaveSceneError("");
-            fetchSavedScenes();
-        }).catch(err => {
-            setSaveSceneError(err?.message ?? String(err));
-        });
-    }, [hass, saveSceneName, lastActionPayload, fetchSavedScenes]);
-
-    const handleSavedSceneTap = React.useCallback((id: string) => {
-        hass.callService(
-            "scene_presets",
-            "activate_saved_scene",
-            {id: id}
-        ).finally(() => {
-            fetchActiveDynamicScenes();
-        });
-    }, [hass, fetchActiveDynamicScenes]);
-
-    const handleSavedSceneDelete = React.useCallback((id: string) => {
-        const scene = savedScenes.find(s => s.id === id);
-        if (!window.confirm(`Delete saved scene "${scene?.name ?? id}"?`)) {
-            return;
-        }
-
-        hass.callService(
-            "scene_presets",
-            "delete_saved_scene",
-            {id: id}
-        ).finally(() => {
-            fetchSavedScenes();
-        });
-    }, [hass, savedScenes, fetchSavedScenes]);
-
-    useEffect(() => {
-        fetchSavedScenes();
-    }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const handlePresetTap = React.useCallback(
-        (id) => {
+    const buildAction = React.useCallback(
+        (id: string): {service: string, payload: any} => {
             let payload: any = {
                 preset_id: id,
                 targets: targets,
@@ -362,6 +312,90 @@ export const PresetApplyPage: React.FunctionComponent<{
                 service = "apply_preset";
             }
 
+            return {service, payload};
+        },
+        [
+            targets, shuffle, smartShuffle,
+            customBrightness, customBrightnessValue,
+            customTransition, customTransitionValue,
+
+            dynamic, dynamicIntervalValue, dynamicTransitionValue,
+            dynamicPerLight, dynamicIntervalMin, dynamicIntervalMax,
+            dynamicTransitionMin, dynamicTransitionMax
+        ]
+    );
+
+    const hasTargets = React.useMemo(() => {
+        return Object.values(targets ?? {}).some((v: any) => Array.isArray(v) ? v.length > 0 : !!v);
+    }, [targets]);
+
+    const fetchSavedScenes = React.useCallback(() => {
+        hass.callWS({
+            type: "scene_presets/get_saved_scenes",
+        }).then(result => {
+            setSavedScenes(result?.saved_scenes ?? []);
+        }).catch(() => {
+            /* intentional */
+        });
+    }, [hass, setSavedScenes]);
+
+    const handleSaveScene = React.useCallback(() => {
+        const name = saveSceneName.trim();
+        if (!name || !savePresetId || !hasTargets) {
+            return;
+        }
+
+        const {service, payload: actionPayload} = buildAction(savePresetId);
+        const payload = {
+            ...actionPayload,
+            name: name,
+            dynamic: service === "start_dynamic_scene"
+        };
+        Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
+
+        hass.callService("scene_presets", "save_scene", payload).then(() => {
+            setSaveDialogOpen(false);
+            setSaveSceneName("");
+            setSaveSceneError("");
+            fetchSavedScenes();
+        }).catch(err => {
+            setSaveSceneError(err?.message ?? String(err));
+        });
+    }, [hass, saveSceneName, savePresetId, hasTargets, buildAction, fetchSavedScenes]);
+
+    const handleSavedSceneTap = React.useCallback((id: string) => {
+        hass.callService(
+            "scene_presets",
+            "activate_saved_scene",
+            {id: id}
+        ).finally(() => {
+            fetchActiveDynamicScenes();
+        });
+    }, [hass, fetchActiveDynamicScenes]);
+
+    const handleSavedSceneDelete = React.useCallback((id: string) => {
+        const scene = savedScenes.find(s => s.id === id);
+        if (!window.confirm(`Delete saved scene "${scene?.name ?? id}"?`)) {
+            return;
+        }
+
+        hass.callService(
+            "scene_presets",
+            "delete_saved_scene",
+            {id: id}
+        ).finally(() => {
+            fetchSavedScenes();
+        });
+    }, [hass, savedScenes, fetchSavedScenes]);
+
+    useEffect(() => {
+        fetchSavedScenes();
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const handlePresetTap = React.useCallback(
+        (id) => {
+            const {service, payload} = buildAction(id);
+
             setLastActionPayload({
                 service: `scene_presets.${service}`,
                 data: payload
@@ -376,14 +410,7 @@ export const PresetApplyPage: React.FunctionComponent<{
             });
         },
         [
-            hass, setLastActionPayload,
-            targets, shuffle, smartShuffle,
-            customBrightness, customBrightnessValue,
-            customTransition, customTransitionValue,
-
-            dynamic, dynamicIntervalValue, dynamicTransitionValue,
-            dynamicPerLight, dynamicIntervalMin, dynamicIntervalMax,
-            dynamicTransitionMin, dynamicTransitionMax,
+            hass, setLastActionPayload, buildAction,
             fetchActiveDynamicScenes
         ]
     );
@@ -518,7 +545,8 @@ export const PresetApplyPage: React.FunctionComponent<{
                                         icon={"mdi:content-save"}
                                         onClick={
                                             () => {
-                                                setSaveSceneError(lastActionPayload?.service ? "" : "Tap a preset first. The last applied preset with its targets and settings will be saved.");
+                                                setSavePresetId(lastActionPayload?.data?.preset_id ?? favoritePresets[0] ?? presets[0]?.id ?? "");
+                                                setSaveSceneError("");
                                                 setSaveDialogOpen(true);
                                             }
                                         }
@@ -910,14 +938,34 @@ export const PresetApplyPage: React.FunctionComponent<{
                     heading={"Save scene"}
                 >
                     <div>
-                        Saves the last applied preset together with its targets and settings.
+                        Saves the selected preset together with the current targets and tunables
+                        {dynamic ? (dynamicPerLight ? " (dynamic, per-light timing)" : " (dynamic)") : ""}.
                         The saved scene shows up under &quot;My scenes&quot; and as a scene entity in Home Assistant.
                     </div>
+                    <div style={{marginTop: "1rem"}}>
+                        <select
+                            className={"save-scene-preset"}
+                            value={savePresetId}
+                            onChange={(e) => setSavePresetId(e.target.value)}
+                            style={DIALOG_INPUT_STYLE}
+                        >
+                            {
+                                categories.map(category => {
+                                    return <optgroup key={"save_cat_" + category.id} label={category.name}>
+                                        {
+                                            (presetsByCategories[category.id] ?? []).map(p => {
+                                                return <option key={"save_opt_" + p.id} value={p.id}>{p.name}</option>;
+                                            })
+                                        }
+                                    </optgroup>;
+                                })
+                            }
+                        </select>
+                    </div>
                     {
-                        lastActionPayload?.service &&
-                        <div style={{marginTop: "1rem", opacity: 0.8}}>
-                            Preset: {presetMap[lastActionPayload.data?.preset_id]?.name ?? lastActionPayload.data?.preset_id}
-                            {lastActionPayload.service === "scene_presets.start_dynamic_scene" ? " (dynamic)" : ""}
+                        !hasTargets &&
+                        <div style={{marginTop: "0.5rem", color: "var(--error-color, #db4437)"}}>
+                            Select at least one target first.
                         </div>
                     }
                     <div style={{marginTop: "1rem"}}>
@@ -932,16 +980,7 @@ export const PresetApplyPage: React.FunctionComponent<{
                                     handleSaveScene();
                                 }
                             }}
-                            style={{
-                                width: "100%",
-                                boxSizing: "border-box",
-                                padding: "0.75rem",
-                                fontSize: "1rem",
-                                borderRadius: "4px",
-                                border: "1px solid var(--divider-color, #888)",
-                                background: "var(--card-background-color, transparent)",
-                                color: "var(--primary-text-color, inherit)"
-                            }}
+                            style={DIALOG_INPUT_STYLE}
                         />
                     </div>
                     {
@@ -969,12 +1008,12 @@ export const PresetApplyPage: React.FunctionComponent<{
                         </button>
                         <button
                             className={"save-scene-confirm"}
-                            disabled={!saveSceneName.trim() || !lastActionPayload?.service}
+                            disabled={!saveSceneName.trim() || !savePresetId || !hasTargets}
                             style={{
                                 ...DIALOG_BUTTON_STYLE,
                                 background: "var(--primary-color, #03a9f4)",
                                 color: "var(--text-primary-color, #fff)",
-                                opacity: (!saveSceneName.trim() || !lastActionPayload?.service) ? 0.5 : 1
+                                opacity: (!saveSceneName.trim() || !savePresetId || !hasTargets) ? 0.5 : 1
                             }}
                             onClick={() => {
                                 handleSaveScene();
