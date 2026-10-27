@@ -19,3 +19,12 @@ ATTR_SMART_SHUFFLE = "smart_shuffle"
 ATTR_INTERVAL = "interval"
 
 ATTR_DYNAMIC_SCENE_ID = "id"
+
+# Added by andrejem (2026): per-light random timing
+ATTR_INTERVAL_MIN = "interval_min"
+ATTR_INTERVAL_MAX = "interval_max"
+ATTR_TRANSITION_MIN = "transition_min"
+ATTR_TRANSITION_MAX = "transition_max"
+ATTR_PER_LIGHT = "per_light"
+ATTR_INTERVAL_RANGE = "interval_range"
+ATTR_TRANSITION_RANGE = "transition_range"

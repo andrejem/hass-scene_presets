@@ -1,3 +1,6 @@
+# Modified by andrejem (2026): start_dynamic_scene accepts optional per-light
+# interval/transition ranges (interval_min/max, transition_min/max).
+
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 import logging
@@ -28,7 +31,19 @@ START_DYNAMIC_SCENE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_INTERVAL, default=60): vol.Coerce(int),
     vol.Optional(ATTR_BRIGHTNESS): vol.Coerce(int),
     vol.Optional(ATTR_TRANSITION, default=1): vol.Coerce(int),
+    vol.Optional(ATTR_INTERVAL_MIN): vol.All(vol.Coerce(float), vol.Range(min=1)),
+    vol.Optional(ATTR_INTERVAL_MAX): vol.All(vol.Coerce(float), vol.Range(min=1)),
+    vol.Optional(ATTR_TRANSITION_MIN): vol.All(vol.Coerce(float), vol.Range(min=0)),
+    vol.Optional(ATTR_TRANSITION_MAX): vol.All(vol.Coerce(float), vol.Range(min=0)),
 })
+
+
+def _build_range(data, attr_min, attr_max, fallback):
+    low = data.get(attr_min, fallback)
+    high = data.get(attr_max, fallback)
+    if low > high:
+        raise vol.Invalid(f"'{attr_min}' must not be greater than '{attr_max}'.")
+    return [low, high]
 
 STOP_DYNAMIC_SCENE_SCHEMA = vol.Schema({
     vol.Required(ATTR_DYNAMIC_SCENE_ID): cv.string,
@@ -93,17 +108,22 @@ async def async_setup(hass, config):
 
         light_entity_ids = resolve_targets(hass, entity_ids, device_ids, area_ids, floor_ids, label_ids)
 
-        return dynamic_scene_manager.create_new(
-            hass,
-            {
-                "preset_id": preset_id,
-                "light_entity_ids": light_entity_ids,
-                "brightness": brightness_override,
-                "transition": transition,
-                "shuffle": shuffle
-            },
-            interval
-        )
+        parameters = {
+            "preset_id": preset_id,
+            "light_entity_ids": light_entity_ids,
+            "brightness": brightness_override,
+            "transition": transition,
+            "shuffle": shuffle
+        }
+
+        range_attrs = (ATTR_INTERVAL_MIN, ATTR_INTERVAL_MAX, ATTR_TRANSITION_MIN, ATTR_TRANSITION_MAX)
+        if any(attr in call.data for attr in range_attrs):
+            # Every light gets its own schedule with randomized interval and transition
+            parameters[ATTR_PER_LIGHT] = True
+            parameters[ATTR_INTERVAL_RANGE] = _build_range(call.data, ATTR_INTERVAL_MIN, ATTR_INTERVAL_MAX, interval)
+            parameters[ATTR_TRANSITION_RANGE] = _build_range(call.data, ATTR_TRANSITION_MIN, ATTR_TRANSITION_MAX, transition)
+
+        return dynamic_scene_manager.create_new(hass, parameters, interval)
 
     async def stop_dynamic_scene(call):
         scene_id = call.data.get(ATTR_DYNAMIC_SCENE_ID)
