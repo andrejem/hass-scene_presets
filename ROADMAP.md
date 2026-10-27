@@ -25,7 +25,16 @@
 
 - [x] README: fork features section (per-light timing, saved scenes, HA 2026.x dialog buttons)
 
+## Phase 4 - Room card  *(done)*
+
+- [x] `activate_saved_scene` accepts `dynamic` to override the saved mode (double tap = static)
+- [x] `custom:scene-presets-room-card`: room slider, scene tiles, light helper rows with members,
+      Raumlicht scene mapping and motion chip, auto-loaded by the integration
+- [x] Tested in Home Assistant (dark/light, phone/desktop, tap/drag/double tap/hold)
+
 ## Ideas
+
+- [ ] Visual card editor (area picker)
 
 - [ ] Edit a saved scene in the panel (currently: overwrite via `save_scene` with `id`)
 - [ ] Use saved scenes in the Raumlicht integration

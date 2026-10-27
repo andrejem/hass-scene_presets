@@ -3,7 +3,7 @@
 </div>
 <br/>
 
-> **Fork notice:** This is a fork of [Hypfer/hass-scene_presets](https://github.com/Hypfer/hass-scene_presets) with additional features (see [ROADMAP.md](ROADMAP.md)). Currently added: [per-light random timing](docs/Per-light%20timing.md) for dynamic scenes and [saved scenes](docs/Saved%20scenes.md) with scene entities.
+> **Fork notice:** This is a fork of [Hypfer/hass-scene_presets](https://github.com/Hypfer/hass-scene_presets) with additional features (see [ROADMAP.md](ROADMAP.md)). Currently added: [per-light random timing](docs/Per-light%20timing.md) for dynamic scenes and [saved scenes](docs/Saved%20scenes.md) with scene entities, plus a [room card](docs/Room%20card.md) for dashboards.
 
 This custom_component is an implementation of an idea not all too dissimilar to what the Philips Hue app calls Scenes.
 Apart from that though, it has nothing to do with Hue. No bridge required.
@@ -87,6 +87,12 @@ pick a preset and give it a name. The scene is stored in Home Assistant (not in 
 shows up under *My scenes* in the panel. Tap a tile to activate it, use the trash icon to delete it.
 Every saved scene is also a `scene.*` entity with the preset image, so it can be used in dashboards,
 automations and voice commands. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
+
+**Room card** – `custom:scene-presets-room-card` shows a room (area) on a dashboard: room
+brightness slider, scene tiles with preset images (tap = activate, double tap = dynamic scene
+once/static, hold = details), light helpers expandable to single lights and the Raumlicht motion
+switch. It is built from the area automatically and loaded by the integration, no resource needed.
+Details: [docs/Room card.md](docs/Room%20card.md)
 
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer
 rendered by recent Home Assistant versions.

@@ -2,6 +2,7 @@ DOMAIN = "scene_presets"
 NAME = "Scene Presets"
 
 PANEL_URL = "/scene_presets_panel.js"
+ROOM_CARD_URL = "/scene_presets_room_card.js"  # added by andrejem (2026)
 
 SERVICE_APPLY_PRESET = "apply_preset"
 SERVICE_START_DYNAMIC_SCENE = "start_dynamic_scene"
