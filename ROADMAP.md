@@ -45,6 +45,15 @@
 - [x] Screenshot of the room card in the README
 - [x] Tested in Home Assistant (area + exclude resolution, dashboard screenshots)
 
+## Phase 6 - Lamp modes  *(done, 2.8.0)*
+
+- [x] `activate_saved_scene` with `targets`: apply a saved scene to other lights
+- [x] Single lights leave a running dynamic scene instead of stopping it (`remove_light`)
+- [x] Lights can join and leave a per-light dynamic scene while it runs
+- [x] Optional lights keep their room scene when they get an own mode
+- [x] Used by the Tap Dial integration: button 2/4 cycles the room scenes on one lamp
+- [x] Tested in Home Assistant (Surimu panel in the living room, static and dynamic)
+
 ## Ideas
 
 - [ ] Visual card editor (area picker)

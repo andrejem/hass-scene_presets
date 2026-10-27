@@ -2,7 +2,7 @@
 # interval/transition ranges (interval_min/max, transition_min/max).
 # Saved scenes: save/delete/activate services and a scene platform.
 # Optional exclude list, keep_groups and optional lights for apply_preset, start_dynamic_scene
-# and saved scenes.
+# and saved scenes. activate_saved_scene can apply a saved scene to other lights (targets).
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -89,6 +89,7 @@ SAVED_SCENE_ID_SCHEMA = vol.Schema({
 ACTIVATE_SAVED_SCENE_SCHEMA = vol.Schema({
     vol.Required(ATTR_DYNAMIC_SCENE_ID): cv.string,
     vol.Optional(ATTR_DYNAMIC): cv.boolean,
+    vol.Optional(ATTR_TARGETS): vol.Any(dict),
 })
 
 STOP_DYNAMIC_SCENES_FOR_TARGETS_SCHEMA = vol.Schema({
@@ -99,6 +100,26 @@ STOP_DYNAMIC_SCENES_FOR_TARGETS_SCHEMA = vol.Schema({
 _LOGGER = logging.getLogger(__name__)
 
 dynamic_scene_manager = DynamicSceneManager()
+
+
+def _detach_from_dynamic_scenes(hass, light_entity_ids):
+    """Remove lights from running dynamic scenes; a scene without lights left is stopped."""
+    targets = set(light_entity_ids)
+    for light_entity_id in light_entity_ids:
+        targets.update(resolve_entity_ids(hass, light_entity_id))
+    for scene in list(dynamic_scene_manager.get_all()):
+        scene_ids = list(scene.parameters.get("light_entity_ids", []))
+        leaving = [
+            entity_id for entity_id in scene_ids
+            if entity_id in targets or targets & set(resolve_entity_ids(hass, entity_id))
+        ]
+        if not leaving:
+            continue
+        if len(leaving) == len(scene_ids):
+            dynamic_scene_manager.delete_by_id(scene.id)
+        else:
+            for entity_id in leaving:
+                scene.remove_light(entity_id)
 
 
 async def async_setup(hass, config):
@@ -253,7 +274,29 @@ async def async_setup(hass, config):
             raise vol.Invalid(f"Saved scene '{scene_id}' not found.")
 
         service, service_data = build_service_call(scene, call.data.get(ATTR_DYNAMIC))
-        if service == SERVICE_APPLY_PRESET:
+        override = call.data.get(ATTR_TARGETS)
+        if override:
+            # Apply the saved scene to other lights, e.g. one lamp of the room (lamp modes)
+            for key in (ATTR_EXCLUDE, ATTR_KEEP_GROUPS, ATTR_OPTIONAL):
+                service_data.pop(key, None)
+            service_data[ATTR_TARGETS] = override
+            override_entity_ids = ensure_list(override.get("entity_id"))
+            lights = filter_targets(
+                hass,
+                resolve_targets(
+                    hass,
+                    override_entity_ids,
+                    ensure_list(override.get("device_id")),
+                    ensure_list(override.get("area_id")),
+                    ensure_list(override.get("floor_id")),
+                    ensure_list(override.get("label_id")),
+                ),
+                override_entity_ids,
+                None,
+            )
+            # These lights leave running dynamic scenes, the other lights of those scenes keep going
+            _detach_from_dynamic_scenes(hass, lights)
+        elif service == SERVICE_APPLY_PRESET:
             # A running dynamic scene on these lights would immediately override the static one
             await hass.services.async_call(
                 DOMAIN, SERVICE_STOP_DYNAMIC_SCENES_FOR_TARGETS,
