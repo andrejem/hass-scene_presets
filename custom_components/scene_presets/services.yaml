@@ -1,3 +1,4 @@
+# Modified by andrejem (2026): fields for per-light timing, saved scenes, exclude, keep_groups and optional.
 apply_preset:
   name: "Apply preset"
   description: Apply a scene preset to specified light entities
@@ -48,6 +49,27 @@ apply_preset:
       example: true
       selector:
         boolean:
+    exclude:
+      name: "Exclude"
+      description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
+      selector:
+        entity:
+          domain: light
+          multiple: true
 
 get_dynamic_scenes:
   name: "Get dynamic scenes"
@@ -136,6 +158,27 @@ start_dynamic_scene:
           min: 0
           max: 300
           unit_of_measurement: seconds
+    exclude:
+      name: "Exclude"
+      description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
+      selector:
+        entity:
+          domain: light
+          multiple: true
 
 stop_dynamic_scene:
   name: "Stop dynamic scene"
@@ -261,6 +304,27 @@ save_scene:
           min: 0
           max: 300
           unit_of_measurement: seconds
+    exclude:
+      name: "Exclude"
+      description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
+      selector:
+        entity:
+          domain: light
+          multiple: true
 
 delete_saved_scene:
   name: "Delete saved scene"

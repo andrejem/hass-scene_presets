@@ -1,3 +1,7 @@
+# Modified by andrejem (2026): filter_targets() for the exclude list, groups kept as one light
+# and segment lights.
+
+import re
 from homeassistant.helpers import entity_registry, device_registry, area_registry
 
 
@@ -121,3 +125,37 @@ def get_config_entry(hass, entity_id):
             return conf_entry
 
     return None
+
+
+# Added by andrejem (2026): exclude list and segment lights for area/device/label targets
+SEGMENT_SUFFIX = re.compile(r"_segment_\d+$")
+
+
+def filter_targets(hass, light_entity_ids, explicit_entity_ids, exclude, keep_groups=None):
+    """Remove excluded lights (groups are resolved to their members) and segment lights.
+
+    Segment lights (e.g. Zigbee2MQTT/Govee ``light.x_segment_001``) are only kept when they were
+    targeted explicitly; through an area, device or label they would fight with the main light.
+
+    Groups in ``keep_groups`` are controlled as one light: their members are replaced by the group.
+    """
+    excluded = set()
+    for entity_id in ensure_list(exclude):
+        excluded.add(entity_id)
+        excluded.update(resolve_entity_ids(hass, entity_id))
+    explicit = set()
+    for entity_id in ensure_list(explicit_entity_ids):
+        explicit.update(resolve_entity_ids(hass, entity_id))
+    result = [
+        entity_id for entity_id in light_entity_ids
+        if entity_id not in excluded
+        and (entity_id in explicit or not SEGMENT_SUFFIX.search(entity_id))
+    ]
+    for group_id in ensure_list(keep_groups):
+        if group_id in excluded or hass.states.get(group_id) is None:
+            continue
+        members = set(resolve_entity_ids(hass, group_id))
+        result = [entity_id for entity_id in result if entity_id not in members]
+        if group_id not in result:
+            result.append(group_id)
+    return result

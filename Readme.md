@@ -88,11 +88,19 @@ shows up under *My scenes* in the panel. Tap a tile to activate it, use the tras
 Every saved scene is also a `scene.*` entity with the preset image, so it can be used in dashboards,
 automations and voice commands. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
+![Room card](img/room-card.png)
+
 **Room card** – `custom:scene-presets-room-card` shows a room (area) on a dashboard: room
 brightness slider, scene tiles with preset images (tap = activate, double tap = dynamic scene
 once/static, hold = details), light helpers expandable to single lights and the Raumlicht motion
 switch. It is built from the area automatically and loaded by the integration, no resource needed.
 Details: [docs/Room card.md](docs/Room%20card.md)
+
+**Exclude** – Scenes and services can target a whole area and leave single lights out with
+`exclude` (a light group excludes its members). With `keep_groups`, a light group is controlled
+as one light (same color for all members). Lights in `optional` only take part if they are on, and
+join the active scene when they are turned on later. Segment lights of Zigbee2MQTT/Govee strips are
+skipped automatically for area targets. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer
 rendered by recent Home Assistant versions.

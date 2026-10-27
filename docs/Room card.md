@@ -1,15 +1,18 @@
 # Room card (fork feature)
 
+![Room card](../img/room-card.png)
+
 `custom:scene-presets-room-card` shows one room (Home Assistant area) on a dashboard:
 
 - **Room slider** – tap to switch all lights of the room on/off, drag for brightness, hold for details.
 - **Scene tiles** – every `scene.*` entity assigned to the area, with the preset image for saved
   scenes. Tap activates the scene, **double tap** applies a dynamic saved scene once (static),
   hold opens the details. The active scene is outlined and checked, dynamic scenes show an icon.
-- **Light rows** – light helpers (light groups) of the room as rows, expandable (›) to their member
-  lights; lights that are not part of a helper get their own row. Each row works like the room
-  slider (tap / drag / hold).
-- **Auto chip** – the Raumlicht motion switch of the room, if Raumlicht is used.
+- **Light rows** – light helpers (light groups) of the room as full-width rows, expandable (›) to
+  their member lights; lights that are not part of a helper get their own row. Single lights are
+  shown two per line (`light_columns`). Each row works like the room slider (tap / drag / hold).
+- **Auto chip** – the Raumlicht motion switch of the room, if Raumlicht is used. Tapping it turns
+  the motion control of the room on or off (the lights themselves are not switched).
 
 The card is loaded by the integration automatically, no dashboard resource is needed. It is built
 entirely from the area, so new scenes and lights show up without changing the dashboard.
@@ -26,8 +29,10 @@ area: arbeitszimmer
 | `area`        | –       | Area ID (required)                                                          |
 | `name`        | area name | Title of the room slider                                                  |
 | `columns`     | 3       | Columns of the scene tiles                                                  |
+| `light_columns` | 2     | Columns of the single light rows (groups always use the full width)        |
+| `scenes`      | auto    | Explicit list and order of scene entities instead of all scenes of the area |
 | `lights`      | auto    | Explicit list of light entities instead of all lights of the area          |
-| `hide`        | –       | Entities (lights or scenes) not to show                                     |
+| `hide`        | –       | Entities (lights or scenes) not to show, e.g. motion-only scenes            |
 | `master`      | auto    | Light (group) used for the room slider                                      |
 | `structural`  | –       | Additional light groups that are not shown as rows (only their members)     |
 | `show_lights` | true    | Show the light rows                                                         |

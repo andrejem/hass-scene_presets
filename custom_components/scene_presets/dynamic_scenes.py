@@ -1,5 +1,6 @@
 # Modified by andrejem (2026): added optional per-light timing with randomized
 # interval and transition ranges. Without those ranges the behavior is unchanged.
+# add_light() lets an optional light join a running scene.
 
 import uuid
 import asyncio
@@ -28,6 +29,7 @@ class DynamicScene:
         self._running = False
         self._task = None
         self._light_tasks = []
+        self._light_loops = {}
         self.parameters = parameters
         self.self_destruct_callback = self_destruct_callback
 
@@ -101,10 +103,8 @@ class DynamicScene:
         )
 
         # Afterwards, every light runs on its own schedule
-        self._light_tasks = [
-            self.hass.async_create_task(self._single_light_loop(entity_id))
-            for entity_id in light_entity_ids
-        ]
+        for entity_id in light_entity_ids:
+            self._start_light_loop(entity_id)
 
         try:
             await asyncio.gather(*self._light_tasks)
@@ -140,6 +140,22 @@ class DynamicScene:
                 self.parameters.get(ATTR_BRIGHTNESS, None),
             )
 
+    def _start_light_loop(self, entity_id):
+        task = self.hass.async_create_task(self._single_light_loop(entity_id))
+        self._light_loops[entity_id] = task
+        self._light_tasks.append(task)
+
+    def add_light(self, entity_id):
+        """Let a light join the running scene (used for optional lights)."""
+        light_entity_ids = self.parameters.setdefault("light_entity_ids", [])
+        if entity_id not in light_entity_ids:
+            light_entity_ids.append(entity_id)
+        if self.per_light and self._running:
+            task = self._light_loops.get(entity_id)
+            if task is None or task.done():
+                self._start_light_loop(entity_id)
+        # The regular loop reads light_entity_ids on every run, so nothing else to do there
+
     def start_loop(self):
         if self._running:
             return
@@ -156,6 +172,7 @@ class DynamicScene:
         for task in self._light_tasks:
             task.cancel()
         self._light_tasks = []
+        self._light_loops = {}
 
         if self._task:
             self._task.cancel()
