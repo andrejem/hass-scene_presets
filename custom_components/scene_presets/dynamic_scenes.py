@@ -1,6 +1,6 @@
 # Modified by andrejem (2026): added optional per-light timing with randomized
 # interval and transition ranges. Without those ranges the behavior is unchanged.
-# add_light() lets an optional light join a running scene.
+# add_light()/remove_light() let single lights join or leave a running scene.
 
 import uuid
 import asyncio
@@ -106,10 +106,15 @@ class DynamicScene:
         for entity_id in light_entity_ids:
             self._start_light_loop(entity_id)
 
-        try:
-            await asyncio.gather(*self._light_tasks)
-        except asyncio.CancelledError:
-            pass
+        # Wait until every light loop has ended; lights may join or leave in the meantime
+        while self._running:
+            pending = [task for task in self._light_loops.values() if not task.done()]
+            if not pending:
+                break
+            try:
+                await asyncio.wait(pending)
+            except asyncio.CancelledError:
+                return
 
         if self._running:
             # All single light loops ended because their lights were turned off
@@ -122,7 +127,8 @@ class DynamicScene:
         while self._running:
             await asyncio.sleep(_pick(interval_range))
 
-            if not self._running:
+            if not self._running or self._light_loops.get(entity_id) is not asyncio.current_task():
+                # Scene stopped, light removed from the scene or replaced by a newer loop
                 return
 
             state = self.hass.states.get(entity_id)
@@ -155,6 +161,14 @@ class DynamicScene:
             if task is None or task.done():
                 self._start_light_loop(entity_id)
         # The regular loop reads light_entity_ids on every run, so nothing else to do there
+
+    def remove_light(self, entity_id):
+        """Let a light leave the running scene, the other lights keep going."""
+        light_entity_ids = self.parameters.get("light_entity_ids", [])
+        if entity_id in light_entity_ids:
+            light_entity_ids.remove(entity_id)
+        # The loop notices that it is no longer the registered loop for this light and ends
+        self._light_loops.pop(entity_id, None)
 
     def start_loop(self):
         if self._running:

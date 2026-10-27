@@ -99,7 +99,9 @@ Details: [docs/Room card.md](docs/Room%20card.md)
 **Exclude** – Scenes and services can target a whole area and leave single lights out with
 `exclude` (a light group excludes its members). With `keep_groups`, a light group is controlled
 as one light (same color for all members). Lights in `optional` only take part if they are on, and
-join the active scene when they are turned on later. Segment lights of Zigbee2MQTT/Govee strips are
+join the active scene when they are turned on later. `activate_saved_scene` can apply a saved scene
+to other lights (`targets`), e.g. to give one lamp its own mode; that lamp leaves a running dynamic
+scene while the other lights keep going. Segment lights of Zigbee2MQTT/Govee strips are
 skipped automatically for area targets. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer

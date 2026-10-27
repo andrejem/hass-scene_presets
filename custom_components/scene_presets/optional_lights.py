@@ -52,13 +52,17 @@ class OptionalLights:
         self._unsub = None
 
     def forget_overlapping(self, light_entity_ids, optional_ids):
-        """A new scene on the same lights replaces older registrations."""
+        """A new scene on the lights of a registration replaces it.
+
+        A scene for the optional light alone (e.g. a lamp mode) keeps the registration, so the
+        light still joins the room scene after it was off.
+        """
         lights = set(light_entity_ids)
         optional = set(optional_ids)
         for entity_id, registration in list(self._registrations.items()):
             if entity_id in optional:
                 continue  # re-registered by the new scene
-            if entity_id in lights or lights & set(registration["lights"]):
+            if lights & set(registration["lights"]):
                 del self._registrations[entity_id]
         self._resubscribe()
 

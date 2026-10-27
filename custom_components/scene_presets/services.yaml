@@ -352,3 +352,10 @@ activate_saved_scene:
       description: "Optional. Override the saved mode: off applies a dynamic scene once (static), on starts a static scene as dynamic scene"
       selector:
         boolean:
+    targets:
+      name: "Targets"
+      description: "Optional. Apply the saved scene to these lights instead of its own targets (exclude, keep_groups and optional are ignored then). The lights leave running dynamic scenes, the rest of those scenes keeps going."
+      selector:
+        target:
+          entity:
+            domain: light

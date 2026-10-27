@@ -21,12 +21,26 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 | Service                              | Fields                                                                                                  |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups`, `optional` and all fields of `apply_preset` / `start_dynamic_scene` |
-| `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode)                                                      |
+| `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode), optional `targets` (apply to other lights)         |
 | `scene_presets.delete_saved_scene`   | `id` (also removes the scene entity)                                                                    |
 
 `activate_saved_scene` accepts an optional `dynamic` flag that overrides the saved mode:
 `dynamic: false` applies a dynamic scene once with spread colors (and stops a dynamic scene that is
 running on the same lights), `dynamic: true` starts a static scene as dynamic scene.
+
+`activate_saved_scene` also accepts `targets`: the saved scene (preset and settings) is applied to
+these lights instead of its own targets; `exclude`, `keep_groups` and `optional` of the scene are
+ignored then. This is used for **lamp modes**: one lamp of a room gets another scene of the room
+than the rest. If the lamp is part of a running dynamic scene, only the lamp leaves it, the other
+lights keep going (the scene stops only when no light is left).
+
+```yaml
+action: scene_presets.activate_saved_scene
+data:
+  id: 7f3c...            # e.g. the "Living room aurora" scene
+  targets:
+    entity_id: light.deco_panel
+```
 
 `save_scene` returns the stored scene (including its `id`) as response.
 The websocket command `scene_presets/get_saved_scenes` lists all saved scenes.
