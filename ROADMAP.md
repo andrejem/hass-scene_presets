@@ -1,6 +1,6 @@
 # Roadmap (fork)
 
-## Phase 1 - Per-light random timing  *(in progress)*
+## Phase 1 - Per-light random timing  *(done)*
 
 - [x] `start_dynamic_scene` accepts optional `interval_min`, `interval_max`,
       `transition_min`, `transition_max`
@@ -10,13 +10,21 @@
 - [x] Manual test in Home Assistant (Zigbee2MQTT acoustic panels, HA 2026.10.3)
 - [ ] Optionally offer as pull request upstream
 
-## Phase 2 - Saved scenes
+## Phase 2 - Saved scenes  *(done)*
 
-- [ ] Store scenes (preset, targets, brightness, timing) in Home Assistant storage
-- [ ] Services to save, delete and activate saved scenes
-- [ ] One `scene.*` entity per saved scene (usable in automations, dashboards and Raumlicht)
+- [x] Store scenes (preset, targets, brightness, timing) in Home Assistant storage
+- [x] Services to save, delete and activate saved scenes
+- [x] One `scene.*` entity per saved scene with the preset image as entity picture
+- [x] Manual test: save, activate via `scene.turn_on`, rename, survive restart, delete (no registry leftovers)
 
-## Phase 3 - Panel
+## Phase 3 - Panel  *(done)*
 
-- [ ] "My scenes" section with image tiles
-- [ ] "Save current selection" button
+- [x] "My scenes" section with image tiles (tap to activate, trash icon to delete)
+- [x] Save button + dialog that stores the last applied preset with targets and settings
+- [x] UI end-to-end test with a headless browser
+
+## Ideas
+
+- [ ] Edit a saved scene in the panel (currently: overwrite via `save_scene` with `id`)
+- [ ] Use saved scenes in the Raumlicht integration
+- [ ] Replace the remaining `mwc-button` usages of upstream (no longer rendered in HA 2026.x)

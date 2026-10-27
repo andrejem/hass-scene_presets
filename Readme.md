@@ -3,7 +3,7 @@
 </div>
 <br/>
 
-> **Fork notice:** This is a fork of [Hypfer/hass-scene_presets](https://github.com/Hypfer/hass-scene_presets) with additional features (see [ROADMAP.md](ROADMAP.md)). Currently added: [per-light random timing](docs/Per-light%20timing.md) for dynamic scenes.
+> **Fork notice:** This is a fork of [Hypfer/hass-scene_presets](https://github.com/Hypfer/hass-scene_presets) with additional features (see [ROADMAP.md](ROADMAP.md)). Currently added: [per-light random timing](docs/Per-light%20timing.md) for dynamic scenes and [saved scenes](docs/Saved%20scenes.md) with scene entities.
 
 This custom_component is an implementation of an idea not all too dissimilar to what the Philips Hue app calls Scenes.
 Apart from that though, it has nothing to do with Hue. No bridge required.

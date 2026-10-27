@@ -28,3 +28,10 @@ ATTR_TRANSITION_MAX = "transition_max"
 ATTR_PER_LIGHT = "per_light"
 ATTR_INTERVAL_RANGE = "interval_range"
 ATTR_TRANSITION_RANGE = "transition_range"
+
+# Added by andrejem (2026): saved scenes
+SERVICE_SAVE_SCENE = "save_scene"
+SERVICE_DELETE_SAVED_SCENE = "delete_saved_scene"
+SERVICE_ACTIVATE_SAVED_SCENE = "activate_saved_scene"
+ATTR_NAME = "name"
+ATTR_DYNAMIC = "dynamic"
