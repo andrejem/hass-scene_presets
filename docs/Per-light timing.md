@@ -22,6 +22,12 @@ If only one bound of a pair is given, the other one falls back to `interval` / `
 The first iteration still applies the preset to all lights at once with a short transition.
 Lights that are turned off are left alone; the scene stops once all its lights are off.
 
+## Panel
+
+In the Scene Presets sidebar panel, enable **Dynamic** and then **Per-light timing**.
+The Interval and Transition sliders are replaced by Interval min/max and Transition min/max.
+Active per-light scenes show their ranges on the tile (e.g. `I: 20-60s, T: 5-15s`).
+
 ## Example
 
 ```yaml

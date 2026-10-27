@@ -6,6 +6,7 @@
       `transition_min`, `transition_max`
 - [x] When set, every light runs on its own schedule with a random interval and transition
       per color change; without them the behavior is unchanged
+- [x] Panel: "Per-light timing" switch with min/max inputs, ranges shown on active scene tiles
 - [x] Manual test in Home Assistant (Zigbee2MQTT acoustic panels, HA 2026.10.3)
 - [ ] Optionally offer as pull request upstream
 
@@ -19,4 +20,3 @@
 
 - [ ] "My scenes" section with image tiles
 - [ ] "Save current selection" button
-- [ ] Inputs for per-light min/max timing

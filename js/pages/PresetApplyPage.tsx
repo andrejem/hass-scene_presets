@@ -1,3 +1,5 @@
+// Modified by andrejem (2026): per-light timing controls for dynamic scenes
+
 import React, {useEffect, useMemo, useState} from "react";
 import {PresetTile} from "../components/PresetTile";
 import {useLocalStorage} from "../hooks/useLocalStorage";
@@ -21,6 +23,11 @@ const DEFAULT_TUNABLE_SETTINGS = {
     dynamic: false,
     dynamicTransitionValue: 45,
     dynamicIntervalValue: 60,
+    dynamicPerLight: false,
+    dynamicIntervalMin: 20,
+    dynamicIntervalMax: 60,
+    dynamicTransitionMin: 5,
+    dynamicTransitionMax: 15,
 };
 
 const DYNAMIC_SCENE_REFRESH_INTERVAL = 30*1000;
@@ -187,6 +194,11 @@ export const PresetApplyPage: React.FunctionComponent<{
     const [dynamic, setDynamic] = useLocalStorage<boolean>("scene_presets_apply_page_dynamic", DEFAULT_TUNABLE_SETTINGS.dynamic);
     const [dynamicTransitionValue, setDynamicTransitionValue] = useLocalStorage<number>("scene_presets_apply_page_dynamic_transition_value", DEFAULT_TUNABLE_SETTINGS.dynamicTransitionValue);
     const [dynamicIntervalValue, setDynamicIntervalValue] = useLocalStorage<number>("scene_presets_apply_page_dynamic_interval_value", DEFAULT_TUNABLE_SETTINGS.dynamicIntervalValue);
+    const [dynamicPerLight, setDynamicPerLight] = useLocalStorage<boolean>("scene_presets_apply_page_dynamic_per_light", DEFAULT_TUNABLE_SETTINGS.dynamicPerLight);
+    const [dynamicIntervalMin, setDynamicIntervalMin] = useLocalStorage<number>("scene_presets_apply_page_dynamic_interval_min", DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMin);
+    const [dynamicIntervalMax, setDynamicIntervalMax] = useLocalStorage<number>("scene_presets_apply_page_dynamic_interval_max", DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMax);
+    const [dynamicTransitionMin, setDynamicTransitionMin] = useLocalStorage<number>("scene_presets_apply_page_dynamic_transition_min", DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMin);
+    const [dynamicTransitionMax, setDynamicTransitionMax] = useLocalStorage<number>("scene_presets_apply_page_dynamic_transition_max", DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMax);
 
     const [lastDynamicSceneRefresh, setLastDynamicSceneRefresh] = useState(0);
 
@@ -213,7 +225,9 @@ export const PresetApplyPage: React.FunctionComponent<{
                 scenes[s.id] = {
                     preset_id: s.parameters.preset_id,
                     interval: s.interval,
-                    transition: s.parameters.transition
+                    transition: s.parameters.transition,
+                    interval_range: s.parameters.interval_range,
+                    transition_range: s.parameters.transition_range
                 };
             });
 
@@ -242,11 +256,21 @@ export const PresetApplyPage: React.FunctionComponent<{
             let service: string;
 
             if (dynamic) {
-                payload = {
-                    ...payload,
-                    transition: dynamicTransitionValue,
-                    interval: dynamicIntervalValue
-                };
+                if (dynamicPerLight) {
+                    payload = {
+                        ...payload,
+                        interval_min: Math.min(dynamicIntervalMin, dynamicIntervalMax),
+                        interval_max: Math.max(dynamicIntervalMin, dynamicIntervalMax),
+                        transition_min: Math.min(dynamicTransitionMin, dynamicTransitionMax),
+                        transition_max: Math.max(dynamicTransitionMin, dynamicTransitionMax)
+                    };
+                } else {
+                    payload = {
+                        ...payload,
+                        transition: dynamicTransitionValue,
+                        interval: dynamicIntervalValue
+                    };
+                }
 
                 service = "start_dynamic_scene";
             } else {
@@ -280,6 +304,8 @@ export const PresetApplyPage: React.FunctionComponent<{
             customTransition, customTransitionValue,
 
             dynamic, dynamicIntervalValue, dynamicTransitionValue,
+            dynamicPerLight, dynamicIntervalMin, dynamicIntervalMax,
+            dynamicTransitionMin, dynamicTransitionMax,
             fetchActiveDynamicScenes
         ]
     );
@@ -475,6 +501,11 @@ export const PresetApplyPage: React.FunctionComponent<{
                                             setDynamic(DEFAULT_TUNABLE_SETTINGS.dynamic);
                                             setDynamicTransitionValue(DEFAULT_TUNABLE_SETTINGS.dynamicTransitionValue);
                                             setDynamicIntervalValue(DEFAULT_TUNABLE_SETTINGS.dynamicIntervalValue);
+                                            setDynamicPerLight(DEFAULT_TUNABLE_SETTINGS.dynamicPerLight);
+                                            setDynamicIntervalMin(DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMin);
+                                            setDynamicIntervalMax(DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMax);
+                                            setDynamicTransitionMin(DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMin);
+                                            setDynamicTransitionMax(DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMax);
                                         }}
 
                                         size={28}
@@ -523,6 +554,58 @@ export const PresetApplyPage: React.FunctionComponent<{
                         }
                         {
                             dynamic &&
+                            <>
+                                <Switch
+                                    label={"Per-light timing"}
+                                    value={dynamicPerLight}
+                                    setValue={(v) => setDynamicPerLight(v)}
+                                />
+                                <br/>
+                            </>
+                        }
+                        {
+                            dynamic && dynamicPerLight &&
+                            <>
+                                <NumberSelector
+                                    label={"Interval min"}
+                                    value={dynamicIntervalMin}
+                                    setValue={(v) => setDynamicIntervalMin(v)}
+                                    minValue={1}
+                                    maxValue={600}
+                                    hass={hass}
+                                    extraSelectorProps={{"unit_of_measurement": "seconds"}}
+                                />
+                                <NumberSelector
+                                    label={"Interval max"}
+                                    value={dynamicIntervalMax}
+                                    setValue={(v) => setDynamicIntervalMax(v)}
+                                    minValue={1}
+                                    maxValue={600}
+                                    hass={hass}
+                                    extraSelectorProps={{"unit_of_measurement": "seconds"}}
+                                />
+                                <NumberSelector
+                                    label={"Transition min"}
+                                    value={dynamicTransitionMin}
+                                    setValue={(v) => setDynamicTransitionMin(v)}
+                                    minValue={0}
+                                    maxValue={300}
+                                    hass={hass}
+                                    extraSelectorProps={{"unit_of_measurement": "seconds"}}
+                                />
+                                <NumberSelector
+                                    label={"Transition max"}
+                                    value={dynamicTransitionMax}
+                                    setValue={(v) => setDynamicTransitionMax(v)}
+                                    minValue={0}
+                                    maxValue={300}
+                                    hass={hass}
+                                    extraSelectorProps={{"unit_of_measurement": "seconds"}}
+                                />
+                            </>
+                        }
+                        {
+                            dynamic && !dynamicPerLight &&
                             <>
                                 <NumberSelector
                                     label={"Interval"}
@@ -612,6 +695,8 @@ export const PresetApplyPage: React.FunctionComponent<{
                                         name={name}
                                         interval={dynamicScenes[id]?.interval ?? -1}
                                         transition={dynamicScenes[id]?.transition ?? -1}
+                                        intervalRange={dynamicScenes[id]?.interval_range}
+                                        transitionRange={dynamicScenes[id]?.transition_range}
                                         imgSrc={imgSrc}
                                         onClick={(id) => {
                                             handleDynamicSceneTap(id);
