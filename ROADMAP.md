@@ -23,6 +23,8 @@
 - [x] Save button + dialog: pick a preset, store it with the current targets and tunables
 - [x] UI end-to-end test with a headless browser
 
+- [x] README: fork features section (per-light timing, saved scenes, HA 2026.x dialog buttons)
+
 ## Ideas
 
 - [ ] Edit a saved scene in the panel (currently: overwrite via `save_scene` with `id`)

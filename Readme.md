@@ -72,6 +72,25 @@ Furthermore, you should know that<br/>
 - dynamic scenes do not survive a restart of home assistant. This is intentional.
 - dynamic scenes will on first iteration always use a transition of 0.5s and no smart shuffle for instant results and to make sure to get all colors of the selected preset into the rotation.
 
+### Fork features
+
+This fork adds the following on top of the original:
+
+**Per-light timing** – In the Tunables, enable *Dynamic* and then *Per-light timing*. Instead of one
+interval and transition for all lights, you set a min/max range for both. Every light then changes
+on its own schedule and picks a new random interval and transition for every color change, so the
+lights no longer change in sync. Active scene tiles show the ranges (e.g. `I: 20-60s, T: 5-15s`).
+Details: [docs/Per-light timing.md](docs/Per-light%20timing.md)
+
+**Saved scenes** – Select targets and tunables, click the save icon (floppy disk) at the top right,
+pick a preset and give it a name. The scene is stored in Home Assistant (not in the browser) and
+shows up under *My scenes* in the panel. Tap a tile to activate it, use the trash icon to delete it.
+Every saved scene is also a `scene.*` entity with the preset image, so it can be used in dashboards,
+automations and voice commands. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
+
+**Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer
+rendered by recent Home Assistant versions.
+
 ### Service usage
 
 The UI is not the only way to use this component. In fact, it too just calls the services provided by it.
