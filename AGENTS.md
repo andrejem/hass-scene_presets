@@ -22,6 +22,8 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
   - `view.py`, `websocket_api.py` - panel registration, static assets, websocket commands
   - `presets.json`, `assets/` - built-in presets and their images
   - `frontend/scene_presets_panel.js` - **built** panel bundle, committed to the repo
+  - `frontend/scene-presets-room-card.js` - room card (plain JS, no build step), served and
+    auto-loaded via `view.py`; borrows Lit from Home Assistant's own elements
   - `services.yaml` - service descriptions shown in the HA UI
 - `js/` - panel source (React + TypeScript), built with webpack into `frontend/`
 - `docs/` - user documentation

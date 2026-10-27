@@ -1,4 +1,5 @@
-from .const import NAME, DOMAIN, PANEL_URL
+# Modified by andrejem (2026): serves and auto-loads the room card (scene-presets-room-card)
+from .const import NAME, DOMAIN, PANEL_URL, ROOM_CARD_URL
 from .file_utils import VERSION, PRESET_DATA, BASE_PATH
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
 from homeassistant.components.frontend import async_remove_panel, async_register_built_in_panel
@@ -25,7 +26,8 @@ class ScenePresetDataView(HomeAssistantView):
 async def async_setup_view(hass):
     static_paths = [
         StaticPathConfig(PANEL_URL, hass.config.path(f'{BASE_PATH}/frontend/scene_presets_panel.js'), True),
-        StaticPathConfig(f'/assets/{DOMAIN}/iconset.js', hass.config.path(f'{BASE_PATH}/res/iconset.js'), True)
+        StaticPathConfig(f'/assets/{DOMAIN}/iconset.js', hass.config.path(f'{BASE_PATH}/res/iconset.js'), True),
+        StaticPathConfig(ROOM_CARD_URL, hass.config.path(f'{BASE_PATH}/frontend/scene-presets-room-card.js'), True),
     ]
     
     static_paths.extend(await get_preset_image_paths(hass))
@@ -34,6 +36,7 @@ async def async_setup_view(hass):
 
     hass.http.register_view(ScenePresetDataView)
     add_extra_js_url(hass, f"/assets/{DOMAIN}/iconset.js?{VERSION}")
+    add_extra_js_url(hass, f"{ROOM_CARD_URL}?{VERSION}")
 
     async_register_built_in_panel(
         hass,

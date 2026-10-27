@@ -85,15 +85,24 @@ class SavedSceneStore:
         return True
 
 
-def build_service_call(scene: dict) -> tuple[str, dict]:
-    """Return (service, service_data) that activates the given saved scene."""
-    data = {key: scene[key] for key in SCENE_SETTING_KEYS if key in scene}
+def build_service_call(scene: dict, dynamic: bool | None = None) -> tuple[str, dict]:
+    """Return (service, service_data) that activates the given saved scene.
 
-    if scene.get("dynamic"):
+    ``dynamic`` overrides the saved mode: False applies a dynamic scene once (static),
+    True starts a static scene as dynamic scene.
+    """
+    data = {key: scene[key] for key in SCENE_SETTING_KEYS if key in scene}
+    run_dynamic = scene.get("dynamic", False) if dynamic is None else dynamic
+
+    if run_dynamic:
         for key in ("shuffle", "smart_shuffle"):
             data.pop(key, None)
         return "start_dynamic_scene", data
 
+    if scene.get("dynamic"):
+        # A dynamic scene applied once: spread the preset colors like the dynamic scene would
+        data.setdefault("shuffle", True)
+        data.setdefault("smart_shuffle", False)
     for key in ("interval", "interval_min", "interval_max", "transition_min", "transition_max"):
         data.pop(key, None)
     return "apply_preset", data
