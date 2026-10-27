@@ -20,7 +20,7 @@
 ## Phase 3 - Panel  *(done)*
 
 - [x] "My scenes" section with image tiles (tap to activate, trash icon to delete)
-- [x] Save button + dialog that stores the last applied preset with targets and settings
+- [x] Save button + dialog: pick a preset, store it with the current targets and tunables
 - [x] UI end-to-end test with a headless browser
 
 ## Ideas
