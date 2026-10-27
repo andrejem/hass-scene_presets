@@ -97,7 +97,8 @@ switch. It is built from the area automatically and loaded by the integration, n
 Details: [docs/Room card.md](docs/Room%20card.md)
 
 **Exclude** – Scenes and services can target a whole area and leave single lights out with
-`exclude` (a light group excludes its members). Segment lights of Zigbee2MQTT/Govee strips are
+`exclude` (a light group excludes its members). With `keep_groups`, a light group is controlled
+as one light (same color for all members). Segment lights of Zigbee2MQTT/Govee strips are
 skipped automatically for area targets. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer

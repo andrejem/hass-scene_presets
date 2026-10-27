@@ -38,6 +38,8 @@
       skipped for area/device/floor/label targets
 - [x] Room card: groups full width, single lights and expanded members two per line
       (`light_columns`), explicit scene order (`scenes`)
+- [x] `keep_groups`: control light groups as one light (also in dynamic scenes)
+- [x] Stopping dynamic scenes also matches groups by their members
 - [x] Screenshot of the room card in the README
 - [x] Tested in Home Assistant (area + exclude resolution, dashboard screenshots)
 

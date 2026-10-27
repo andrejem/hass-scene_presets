@@ -32,7 +32,7 @@ area: arbeitszimmer
 | `light_columns` | 2     | Columns of the single light rows (groups always use the full width)        |
 | `scenes`      | auto    | Explicit list and order of scene entities instead of all scenes of the area |
 | `lights`      | auto    | Explicit list of light entities instead of all lights of the area          |
-| `hide`        | –       | Entities (lights or scenes) not to show                                     |
+| `hide`        | –       | Entities (lights or scenes) not to show, e.g. motion-only scenes            |
 | `master`      | auto    | Light (group) used for the room slider                                      |
 | `structural`  | –       | Additional light groups that are not shown as rows (only their members)     |
 | `show_lights` | true    | Show the light rows                                                         |

@@ -28,6 +28,7 @@ SCENE_SETTING_KEYS = (
     "transition_min",
     "transition_max",
     "exclude",
+    "keep_groups",
 )
 
 

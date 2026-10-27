@@ -1,4 +1,4 @@
-# Modified by andrejem (2026): fields for per-light timing, saved scenes and exclude.
+# Modified by andrejem (2026): fields for per-light timing, saved scenes, exclude and keep_groups.
 apply_preset:
   name: "Apply preset"
   description: Apply a scene preset to specified light entities
@@ -52,6 +52,13 @@ apply_preset:
     exclude:
       name: "Exclude"
       description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
       selector:
         entity:
           domain: light
@@ -147,6 +154,13 @@ start_dynamic_scene:
     exclude:
       name: "Exclude"
       description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
       selector:
         entity:
           domain: light
@@ -279,6 +293,13 @@ save_scene:
     exclude:
       name: "Exclude"
       description: "Optional. Lights to leave out, e.g. when targeting a whole area. Excluding a group also excludes its members."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    keep_groups:
+      name: "Keep groups"
+      description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
       selector:
         entity:
           domain: light

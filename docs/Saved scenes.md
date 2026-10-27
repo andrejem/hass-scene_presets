@@ -20,7 +20,7 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 
 | Service                              | Fields                                                                                                  |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude` and all fields of `apply_preset` / `start_dynamic_scene` |
+| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups` and all fields of `apply_preset` / `start_dynamic_scene` |
 | `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode)                                                      |
 | `scene_presets.delete_saved_scene`   | `id` (also removes the scene entity)                                                                    |
 
@@ -40,8 +40,12 @@ automatically, otherwise they would fight with their main light. Light groups of
 resolved to their members as before. Lights and groups listed explicitly in `entity_id` work as
 before, a scene with a single light is fine.
 
-New lights in the area are part of the scene automatically. `exclude` also works for
-`apply_preset` and `start_dynamic_scene`.
+With `keep_groups`, light groups are controlled as **one light** instead of light by light: all
+members get the same color, and in a dynamic scene the group changes as a whole. Use it for
+fixtures that consist of several lights, e.g. two strips left and right of a TV.
+
+New lights in the area are part of the scene automatically. `exclude` and `keep_groups` also work
+for `apply_preset` and `start_dynamic_scene`.
 
 ```yaml
 action: scene_presets.save_scene
@@ -53,6 +57,8 @@ data:
   exclude:
     - light.tv_ambilight
     - light.nanoleaf_shapes
+  keep_groups:
+    - light.tv_wall
 ```
 
 ## Example
