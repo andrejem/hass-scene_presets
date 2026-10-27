@@ -21,8 +21,12 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 | Service                              | Fields                                                                                                  |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------|
 | `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic` and all fields of `apply_preset` / `start_dynamic_scene` |
-| `scene_presets.activate_saved_scene` | `id`                                                                                                    |
+| `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode)                                                      |
 | `scene_presets.delete_saved_scene`   | `id` (also removes the scene entity)                                                                    |
+
+`activate_saved_scene` accepts an optional `dynamic` flag that overrides the saved mode:
+`dynamic: false` applies a dynamic scene once with spread colors (and stops a dynamic scene that is
+running on the same lights), `dynamic: true` starts a static scene as dynamic scene.
 
 `save_scene` returns the stored scene (including its `id`) as response.
 The websocket command `scene_presets/get_saved_scenes` lists all saved scenes.

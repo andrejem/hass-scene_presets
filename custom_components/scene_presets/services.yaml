@@ -283,3 +283,8 @@ activate_saved_scene:
       required: true
       selector:
         text: null
+    dynamic:
+      name: "Dynamic"
+      description: "Optional. Override the saved mode: off applies a dynamic scene once (static), on starts a static scene as dynamic scene"
+      selector:
+        boolean:

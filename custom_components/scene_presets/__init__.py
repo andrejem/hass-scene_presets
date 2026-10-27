@@ -74,6 +74,11 @@ SAVED_SCENE_ID_SCHEMA = vol.Schema({
     vol.Required(ATTR_DYNAMIC_SCENE_ID): cv.string,
 })
 
+ACTIVATE_SAVED_SCENE_SCHEMA = vol.Schema({
+    vol.Required(ATTR_DYNAMIC_SCENE_ID): cv.string,
+    vol.Optional(ATTR_DYNAMIC): cv.boolean,
+})
+
 STOP_DYNAMIC_SCENES_FOR_TARGETS_SCHEMA = vol.Schema({
     vol.Required(ATTR_TARGETS): vol.Any(dict),
 })
@@ -196,7 +201,13 @@ async def async_setup(hass, config):
         if scene is None:
             raise vol.Invalid(f"Saved scene '{scene_id}' not found.")
 
-        service, service_data = build_service_call(scene)
+        service, service_data = build_service_call(scene, call.data.get(ATTR_DYNAMIC))
+        if service == SERVICE_APPLY_PRESET:
+            # A running dynamic scene on these lights would immediately override the static one
+            await hass.services.async_call(
+                DOMAIN, SERVICE_STOP_DYNAMIC_SCENES_FOR_TARGETS,
+                {ATTR_TARGETS: service_data[ATTR_TARGETS]}, blocking=True,
+            )
         await hass.services.async_call(DOMAIN, service, service_data, blocking=True)
 
 
@@ -261,7 +272,7 @@ async def async_setup(hass, config):
         DOMAIN,
         SERVICE_ACTIVATE_SAVED_SCENE,
         activate_saved_scene,
-        schema=SAVED_SCENE_ID_SCHEMA
+        schema=ACTIVATE_SAVED_SCENE_SCHEMA
     )
 
 
