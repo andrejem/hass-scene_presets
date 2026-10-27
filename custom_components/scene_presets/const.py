@@ -1,3 +1,5 @@
+# Modified by andrejem (2026): constants for per-light timing, saved scenes, room card and exclude.
+
 DOMAIN = "scene_presets"
 NAME = "Scene Presets"
 
@@ -36,3 +38,4 @@ SERVICE_DELETE_SAVED_SCENE = "delete_saved_scene"
 SERVICE_ACTIVATE_SAVED_SCENE = "activate_saved_scene"
 ATTR_NAME = "name"
 ATTR_DYNAMIC = "dynamic"
+ATTR_EXCLUDE = "exclude"

@@ -78,7 +78,7 @@ class ScenePresetsRoomCard extends LitElement {
 
   setConfig(config) {
     if (!config || !config.area) throw new Error("Please set an area (area: <area_id>)");
-    this._config = { columns: 3, show_lights: true, show_auto: true, ...config };
+    this._config = { columns: 3, light_columns: 2, show_lights: true, show_auto: true, ...config };
     this._open = this._open || {};
     this._drag = null;
   }
@@ -159,18 +159,20 @@ class ScenePresetsRoomCard extends LitElement {
     });
     const covered = new Set(rowGroups.flatMap((g) => leaves(hass, g)));
     const loose = allLeaves.filter((l) => !covered.has(l));
-    const rows = [...rowGroups, ...loose].sort((a, b) =>
-      lightName(hass, a, roomName).localeCompare(lightName(hass, b, roomName), "de"),
-    );
+    const byName = (a, b) => lightName(hass, a, roomName).localeCompare(lightName(hass, b, roomName), "de");
+    const rows = [...rowGroups.sort(byName), ...loose.sort(byName)];
 
     // scenes
-    const scenes = Object.keys(hass.states)
-      .filter((e) => e.startsWith("scene.") && entityArea(hass, e) === area && isVisible(hass, e) && !hide.has(e))
-      .sort((a, b) => {
-        const ra = sceneToRl[a]?.index ?? 999;
-        const rb = sceneToRl[b]?.index ?? 999;
-        return ra - rb || this._sceneLabel(a, sceneToRl, roomName).localeCompare(this._sceneLabel(b, sceneToRl, roomName), "de");
-      });
+    // config "scenes": explicit list and order; otherwise all scene entities of the area
+    const scenes = (Array.isArray(this._config.scenes)
+      ? this._config.scenes.filter((e) => hass.states[e])
+      : Object.keys(hass.states)
+        .filter((e) => e.startsWith("scene.") && entityArea(hass, e) === area && isVisible(hass, e) && !hide.has(e))
+        .sort((a, b) => {
+          const ra = sceneToRl[a]?.index ?? 999;
+          const rb = sceneToRl[b]?.index ?? 999;
+          return ra - rb || this._sceneLabel(a, sceneToRl, roomName).localeCompare(this._sceneLabel(b, sceneToRl, roomName), "de");
+        }));
     // keep one tile per Raumlicht scene (a Raumlicht scene may start several scene entities)
     const seenRl = new Set();
     const tiles = scenes.filter((e) => {
@@ -335,7 +337,7 @@ class ScenePresetsRoomCard extends LitElement {
     const unavailable = entityId && ["unavailable", "unknown"].includes(hass.states[entityId]?.state);
     return html`
       <div
-        class="slider ${opts.small ? "small" : ""} ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}"
+        class="slider ${opts.small ? "small" : ""} ${opts.cls || ""} ${on ? "on" : ""} ${unavailable ? "unavailable" : ""}"
         style="--fill:${on || this._drag?.key === key ? pct : 0}%; --color:${color}"
         @pointerdown=${(e) => this._sliderDown(e, m, key, entityId)}
         @pointermove=${(e) => this._sliderMove(e)}
@@ -404,15 +406,16 @@ class ScenePresetsRoomCard extends LitElement {
             ? html`<div class="tiles" style="--cols:${cfg.columns}">${m.tiles.map((t) => this._tile(m, t))}</div>`
             : ""}
           ${cfg.show_lights && m.rows.length > 0 && !(m.rows.length === 1 && m.rows[0] === m.master)
-            ? html`<div class="rows">
+            ? html`<div class="rows" style="--lcols:${cfg.light_columns}">
                 ${m.rows.map((r) => {
                   const mem = members(this.hass, r);
                   return html`
                     ${this._slider(m, r, r, lightName(this.hass, r, m.roomName), mem ? `${mem.length} Lampen` : "", {
                       expandable: !!mem,
+                      cls: mem ? "full" : "",
                     })}
                     ${mem && this._open[r]
-                      ? html`<div class="members">
+                      ? html`<div class="members full">
                           ${mem.map((x) => this._slider(m, x, x, lightName(this.hass, x, m.roomName), "", { small: true }))}
                         </div>`
                       : ""}
@@ -585,15 +588,28 @@ class ScenePresetsRoomCard extends LitElement {
         line-height: 1.2;
       }
       .rows {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(var(--lcols, 2), minmax(0, 1fr));
         gap: 6px;
       }
+      .rows .full {
+        grid-column: 1 / -1;
+      }
+      .rows > .slider:not(.full) {
+        height: 46px;
+        padding: 0 10px;
+        gap: 8px;
+      }
+      .rows > .slider:not(.full) .name {
+        font-size: 14px;
+      }
       .members {
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-columns: repeat(var(--lcols, 2), minmax(0, 1fr));
         gap: 5px;
-        margin-left: 18px;
+        padding-left: 14px;
+        border-left: 2px solid var(--divider-color);
+        margin-left: 10px;
       }
       .chips {
         display: flex;

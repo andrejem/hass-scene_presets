@@ -32,9 +32,20 @@
       Raumlicht scene mapping and motion chip, auto-loaded by the integration
 - [x] Tested in Home Assistant (dark/light, phone/desktop, tap/drag/double tap/hold)
 
+## Phase 5 - Area scenes and card layout  *(done)*
+
+- [x] `exclude` for `apply_preset`, `start_dynamic_scene` and saved scenes; segment lights are
+      skipped for area/device/floor/label targets
+- [x] Room card: groups full width, single lights and expanded members two per line
+      (`light_columns`), explicit scene order (`scenes`)
+- [x] Screenshot of the room card in the README
+- [x] Tested in Home Assistant (area + exclude resolution, dashboard screenshots)
+
 ## Ideas
 
 - [ ] Visual card editor (area picker)
+- [ ] Exclude list in the panel save dialog
+- [ ] Shorter light names in narrow rows (strip common prefixes)
 
 - [ ] Edit a saved scene in the panel (currently: overwrite via `save_scene` with `id`)
 - [ ] Use saved scenes in the Raumlicht integration

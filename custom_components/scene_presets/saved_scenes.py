@@ -27,6 +27,7 @@ SCENE_SETTING_KEYS = (
     "interval_max",
     "transition_min",
     "transition_max",
+    "exclude",
 )
 
 
