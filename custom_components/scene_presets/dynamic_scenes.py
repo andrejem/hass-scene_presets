@@ -1,10 +1,23 @@
+# Modified by andrejem (2026): added optional per-light timing with randomized
+# interval and transition ranges. Without those ranges the behavior is unchanged.
+
 import uuid
 import asyncio
 import logging
+import random
 from .presets import apply_preset
 from .const import *
 
 _LOGGER = logging.getLogger(__name__)
+
+INITIAL_TRANSITION = 0.5
+
+
+def _pick(value_range):
+    low, high = value_range
+    if low >= high:
+        return low
+    return random.uniform(low, high)
 
 
 class DynamicScene:
@@ -14,33 +27,44 @@ class DynamicScene:
         self.interval = interval
         self._running = False
         self._task = None
+        self._light_tasks = []
         self.parameters = parameters
         self.self_destruct_callback = self_destruct_callback
 
         self.start_loop()
 
+    @property
+    def per_light(self):
+        return self.parameters.get(ATTR_PER_LIGHT, False)
+
+    def _get_light_states(self, light_entity_ids):
+        return [self.hass.states.get(x) for x in light_entity_ids]
+
+    def _all_lights_off(self):
+        states = self._get_light_states(self.parameters.get("light_entity_ids", []))
+        return not any(state is not None and state.state == "on" for state in states)
+
+    def _self_destruct(self):
+        self._running = False
+        self.self_destruct_callback(self.id)
+
     async def _loop(self):
         run_count = 0
 
         while self._running:
-            light_entity_ids = self.parameters.get("light_entity_ids")
+            light_entity_ids = list(self.parameters.get("light_entity_ids"))
             transition = self.parameters.get(ATTR_TRANSITION)
             smart_shuffle = True
 
             if run_count == 0:
-                transition = 0.5
+                transition = INITIAL_TRANSITION
                 smart_shuffle = False
             else:
-                entity_states = [
-                    self.hass.states.get(x)
-                    for x in light_entity_ids
-                    if x is not None
-                ]
-                lights_on = len([x for x in entity_states if x.state == "on"])
+                entity_states = self._get_light_states(light_entity_ids)
+                lights_on = len([x for x in entity_states if x is not None and x.state == "on"])
 
                 if lights_on == 0:
-                    self._running = False
-                    self.self_destruct_callback(self.id)
+                    self._self_destruct()
                     return
                 else:
                     # The user probably purposefully turned off parts of the lights, so if one is off, we ignore it
@@ -48,7 +72,6 @@ class DynamicScene:
                         entity_id for entity_id, state in zip(light_entity_ids, entity_states)
                         if state and state.state == "on"
                     ]
-
 
             await apply_preset(
                 self.hass,
@@ -63,17 +86,79 @@ class DynamicScene:
 
             await asyncio.sleep(self.interval)
 
+    async def _per_light_loop(self):
+        light_entity_ids = list(self.parameters.get("light_entity_ids"))
+
+        # First iteration: apply to all lights at once for instant results and to get all colors into rotation
+        await apply_preset(
+            self.hass,
+            self.parameters.get(ATTR_SCENE_PRESET_ID),
+            light_entity_ids,
+            INITIAL_TRANSITION,
+            True,
+            False,
+            self.parameters.get(ATTR_BRIGHTNESS, None),
+        )
+
+        # Afterwards, every light runs on its own schedule
+        self._light_tasks = [
+            self.hass.async_create_task(self._single_light_loop(entity_id))
+            for entity_id in light_entity_ids
+        ]
+
+        try:
+            await asyncio.gather(*self._light_tasks)
+        except asyncio.CancelledError:
+            pass
+
+        if self._running:
+            # All single light loops ended because their lights were turned off
+            self._self_destruct()
+
+    async def _single_light_loop(self, entity_id):
+        interval_range = self.parameters.get(ATTR_INTERVAL_RANGE)
+        transition_range = self.parameters.get(ATTR_TRANSITION_RANGE)
+
+        while self._running:
+            await asyncio.sleep(_pick(interval_range))
+
+            if not self._running:
+                return
+
+            state = self.hass.states.get(entity_id)
+            if state is None or state.state != "on":
+                # Same as in the regular loop: lights turned off by the user are left alone
+                return
+
+            await apply_preset(
+                self.hass,
+                self.parameters.get(ATTR_SCENE_PRESET_ID),
+                [entity_id],
+                round(_pick(transition_range), 1),
+                True,
+                True,
+                self.parameters.get(ATTR_BRIGHTNESS, None),
+            )
+
     def start_loop(self):
         if self._running:
             return
         self._running = True
-        self._task = self.hass.create_task(self._loop())
+
+        if self.per_light:
+            self._task = self.hass.async_create_task(self._per_light_loop())
+        else:
+            self._task = self.hass.async_create_task(self._loop())
 
     def stop_loop(self):
+        self._running = False
+
+        for task in self._light_tasks:
+            task.cancel()
+        self._light_tasks = []
+
         if self._task:
             self._task.cancel()
-
-        self._running = False
 
     def to_dict(self):
         return {

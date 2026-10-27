@@ -1,3 +1,5 @@
+// Modified by andrejem (2026): show per-light timing ranges
+
 import React from "react";
 import HaIcon from "./hass/building_blocks/HaIcon";
 
@@ -6,6 +8,8 @@ export const DynamicSceneTile :React.FunctionComponent<{
     name: string,
     interval: number,
     transition: number,
+    intervalRange?: [number, number],
+    transitionRange?: [number, number],
     imgSrc?: string
     onClick?: (name: string) => void
 }> = ({
@@ -13,6 +17,8 @@ export const DynamicSceneTile :React.FunctionComponent<{
     name,
     interval,
     transition,
+    intervalRange,
+    transitionRange,
     imgSrc,
     onClick,
 }): React.JSX.Element => {
@@ -53,7 +59,11 @@ export const DynamicSceneTile :React.FunctionComponent<{
                 <div
                     className={"tile-top-info-container"}
                 >
-                    I: {interval}s, T: {transition}s
+                    {
+                        intervalRange && transitionRange ?
+                            `I: ${Math.round(intervalRange[0])}-${Math.round(intervalRange[1])}s, T: ${Math.round(transitionRange[0])}-${Math.round(transitionRange[1])}s` :
+                            `I: ${interval}s, T: ${transition}s`
+                    }
                 </div>
 
                 <div

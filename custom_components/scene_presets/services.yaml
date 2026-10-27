@@ -100,6 +100,42 @@ start_dynamic_scene:
           min: 0
           max: 300
           unit_of_measurement: seconds
+    interval_min:
+      name: "Interval min (per light)"
+      description: "Optional. Enables per-light timing: each light waits a random time between min and max before its next color change"
+      example: 20
+      selector:
+        number:
+          min: 1
+          max: 600
+          unit_of_measurement: seconds
+    interval_max:
+      name: "Interval max (per light)"
+      description: "Optional. Upper bound of the random per-light interval"
+      example: 60
+      selector:
+        number:
+          min: 1
+          max: 600
+          unit_of_measurement: seconds
+    transition_min:
+      name: "Transition min (per light)"
+      description: "Optional. Enables per-light timing: each color change uses a random transition between min and max"
+      example: 5
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
+    transition_max:
+      name: "Transition max (per light)"
+      description: "Optional. Upper bound of the random per-light transition"
+      example: 15
+      selector:
+        number:
+          min: 0
+          max: 300
+          unit_of_measurement: seconds
 
 stop_dynamic_scene:
   name: "Stop dynamic scene"
