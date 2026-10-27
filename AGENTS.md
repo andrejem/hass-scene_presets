@@ -17,6 +17,7 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
   - `dynamic_scenes.py` - dynamic scene engine (endless loops applying shuffled presets)
   - `saved_scenes.py` - persistent saved scenes (HA storage) and mapping to service calls (fork)
   - `scene.py` - scene platform, one entity per saved scene (fork)
+  - `optional_lights.py` - optional lights that join an active scene when turned on (fork)
   - `presets.py` - applies a preset to a list of light entities
   - `color_management.py`, `color_temperature.py` - color selection and CT fallback
   - `view.py`, `websocket_api.py` - panel registration, static assets, websocket commands

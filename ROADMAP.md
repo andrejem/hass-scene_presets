@@ -40,6 +40,8 @@
       (`light_columns`), explicit scene order (`scenes`)
 - [x] `keep_groups`: control light groups as one light (also in dynamic scenes)
 - [x] Stopping dynamic scenes also matches groups by their members
+- [x] `optional` lights: take part only if on, join the active (static or dynamic) scene when
+      turned on later
 - [x] Screenshot of the room card in the README
 - [x] Tested in Home Assistant (area + exclude resolution, dashboard screenshots)
 

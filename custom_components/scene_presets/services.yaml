@@ -1,4 +1,4 @@
-# Modified by andrejem (2026): fields for per-light timing, saved scenes, exclude and keep_groups.
+# Modified by andrejem (2026): fields for per-light timing, saved scenes, exclude, keep_groups and optional.
 apply_preset:
   name: "Apply preset"
   description: Apply a scene preset to specified light entities
@@ -59,6 +59,13 @@ apply_preset:
     keep_groups:
       name: "Keep groups"
       description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
       selector:
         entity:
           domain: light
@@ -161,6 +168,13 @@ start_dynamic_scene:
     keep_groups:
       name: "Keep groups"
       description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
       selector:
         entity:
           domain: light
@@ -300,6 +314,13 @@ save_scene:
     keep_groups:
       name: "Keep groups"
       description: "Optional. Light groups that are controlled as one light (all members get the same color) instead of light by light."
+      selector:
+        entity:
+          domain: light
+          multiple: true
+    optional:
+      name: "Optional lights"
+      description: "Optional. Lights that take part only if they are on when the scene starts. If one is turned on later while the scene is active, it joins the scene."
       selector:
         entity:
           domain: light

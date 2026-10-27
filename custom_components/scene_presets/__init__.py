@@ -1,7 +1,8 @@
 # Modified by andrejem (2026): start_dynamic_scene accepts optional per-light
 # interval/transition ranges (interval_min/max, transition_min/max).
 # Saved scenes: save/delete/activate services and a scene platform.
-# Optional exclude list and keep_groups for apply_preset, start_dynamic_scene and saved scenes.
+# Optional exclude list, keep_groups and optional lights for apply_preset, start_dynamic_scene
+# and saved scenes.
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -16,6 +17,7 @@ from .view import async_setup_view, async_remove_view
 from .util import ensure_list, resolve_targets, filter_targets, resolve_entity_ids
 from .websocket_api import async_setup_websocket_api
 from .saved_scenes import SavedSceneStore, build_service_call
+from .optional_lights import OptionalLights, split_optional
 
 PLATFORMS = ["scene"]
 
@@ -30,6 +32,7 @@ APPLY_PRESET_SCHEMA = vol.Schema({
     vol.Optional(ATTR_SMART_SHUFFLE, default=False): cv.boolean,
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
+    vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
 })
 
 START_DYNAMIC_SCENE_SCHEMA = vol.Schema({
@@ -44,6 +47,7 @@ START_DYNAMIC_SCENE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_TRANSITION_MAX): vol.All(vol.Coerce(float), vol.Range(min=0)),
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
+    vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
 })
 
 
@@ -75,6 +79,7 @@ SAVE_SCENE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_TRANSITION_MAX): vol.All(vol.Coerce(float), vol.Range(min=0)),
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
+    vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
 })
 
 SAVED_SCENE_ID_SCHEMA = vol.Schema({
@@ -100,6 +105,8 @@ async def async_setup(hass, config):
     saved_scene_store = SavedSceneStore(hass)
     await saved_scene_store.async_load()
     hass.data.setdefault(DOMAIN, {})["saved_scenes"] = saved_scene_store
+    optional_lights = OptionalLights(hass, dynamic_scene_manager)
+    hass.data[DOMAIN]["optional_lights"] = optional_lights
 
     async def apply_preset_service(call):
         preset_id = call.data.get(ATTR_SCENE_PRESET_ID)
@@ -123,16 +130,21 @@ async def async_setup(hass, config):
             call.data.get(ATTR_EXCLUDE),
             call.data.get(ATTR_KEEP_GROUPS),
         )
+        light_entity_ids, optional_on, optional_ids = split_optional(
+            hass, light_entity_ids, call.data.get(ATTR_OPTIONAL), call.data.get(ATTR_KEEP_GROUPS)
+        )
+        optional_lights.forget_overlapping(light_entity_ids, optional_ids)
 
         await apply_preset(
             hass,
             preset_id,
-            light_entity_ids,
+            light_entity_ids + optional_on,
             transition,
             shuffle,
             smart_shuffle,
             brightness_override
         )
+        optional_lights.register(optional_ids, light_entity_ids, preset_id, brightness_override)
 
 
     async def start_dynamic_scene(call):
@@ -160,10 +172,14 @@ async def async_setup(hass, config):
             call.data.get(ATTR_EXCLUDE),
             call.data.get(ATTR_KEEP_GROUPS),
         )
+        light_entity_ids, optional_on, optional_ids = split_optional(
+            hass, light_entity_ids, call.data.get(ATTR_OPTIONAL), call.data.get(ATTR_KEEP_GROUPS)
+        )
+        optional_lights.forget_overlapping(light_entity_ids, optional_ids)
 
         parameters = {
             "preset_id": preset_id,
-            "light_entity_ids": light_entity_ids,
+            "light_entity_ids": light_entity_ids + optional_on,
             "brightness": brightness_override,
             "transition": transition,
             "shuffle": shuffle
@@ -176,7 +192,9 @@ async def async_setup(hass, config):
             parameters[ATTR_INTERVAL_RANGE] = _build_range(call.data, ATTR_INTERVAL_MIN, ATTR_INTERVAL_MAX, interval)
             parameters[ATTR_TRANSITION_RANGE] = _build_range(call.data, ATTR_TRANSITION_MIN, ATTR_TRANSITION_MAX, transition)
 
-        return dynamic_scene_manager.create_new(hass, parameters, interval)
+        result = dynamic_scene_manager.create_new(hass, parameters, interval)
+        optional_lights.register(optional_ids, light_entity_ids, preset_id, brightness_override, result["id"])
+        return result
 
     async def stop_dynamic_scene(call):
         scene_id = call.data.get(ATTR_DYNAMIC_SCENE_ID)

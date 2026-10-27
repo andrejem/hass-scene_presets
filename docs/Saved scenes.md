@@ -20,7 +20,7 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 
 | Service                              | Fields                                                                                                  |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups` and all fields of `apply_preset` / `start_dynamic_scene` |
+| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups`, `optional` and all fields of `apply_preset` / `start_dynamic_scene` |
 | `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode)                                                      |
 | `scene_presets.delete_saved_scene`   | `id` (also removes the scene entity)                                                                    |
 
@@ -44,8 +44,25 @@ With `keep_groups`, light groups are controlled as **one light** instead of ligh
 members get the same color, and in a dynamic scene the group changes as a whole. Use it for
 fixtures that consist of several lights, e.g. two strips left and right of a TV.
 
-New lights in the area are part of the scene automatically. `exclude` and `keep_groups` also work
-for `apply_preset` and `start_dynamic_scene`.
+New lights in the area are part of the scene automatically. `exclude`, `keep_groups` and `optional`
+also work for `apply_preset` and `start_dynamic_scene`.
+
+## Optional lights
+
+Lights in `optional` take part in a scene **only if they are on** when the scene starts. A light
+that is off stays off. If it is turned on later (e.g. with a button) while the scene is still
+active, it joins the scene:
+
+- **Static scene:** it gets a color of the same preset (random, different from its current color).
+- **Dynamic scene:** it gets a color of the preset and then changes along with the scene
+  (with per-light timing on its own schedule).
+
+The scene counts as active as long as at least one other light of the scene is on and no other
+scene was started on the same lights. A dynamic scene must still be running. If the light is
+turned on alone in a dark room, it is left as it is.
+
+Typical use: a decorative panel that is usually off, but should match the room when switched on.
+The "remembered" scene is kept in memory only, a restart of Home Assistant forgets it.
 
 ```yaml
 action: scene_presets.save_scene
@@ -59,6 +76,8 @@ data:
     - light.nanoleaf_shapes
   keep_groups:
     - light.tv_wall
+  optional:
+    - light.deco_panel
 ```
 
 ## Example
