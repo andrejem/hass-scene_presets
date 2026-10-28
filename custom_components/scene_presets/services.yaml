@@ -70,6 +70,12 @@ apply_preset:
         entity:
           domain: light
           multiple: true
+    light_brightness:
+      name: "Brightness per light"
+      description: "Optional. Brightness in percent (1-100) for single lights, e.g. {light.led_strip: 20}. Overrides the scene brightness for these lights. A value for a group also applies to its lights."
+      example: '{"light.living_room_strip": 20}'
+      selector:
+        object:
 
 get_dynamic_scenes:
   name: "Get dynamic scenes"
@@ -179,6 +185,12 @@ start_dynamic_scene:
         entity:
           domain: light
           multiple: true
+    light_brightness:
+      name: "Brightness per light"
+      description: "Optional. Brightness in percent (1-100) for single lights, e.g. {light.led_strip: 20}. Overrides the scene brightness for these lights. A value for a group also applies to its lights."
+      example: '{"light.living_room_strip": 20}'
+      selector:
+        object:
 
 stop_dynamic_scene:
   name: "Stop dynamic scene"
@@ -325,6 +337,12 @@ save_scene:
         entity:
           domain: light
           multiple: true
+    light_brightness:
+      name: "Brightness per light"
+      description: "Optional. Brightness in percent (1-100) for single lights, e.g. {light.led_strip: 20}. Overrides the scene brightness for these lights. A value for a group also applies to its lights."
+      example: '{"light.living_room_strip": 20}'
+      selector:
+        object:
 
 delete_saved_scene:
   name: "Delete saved scene"

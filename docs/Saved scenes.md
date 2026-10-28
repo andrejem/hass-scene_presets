@@ -13,14 +13,36 @@ activates the saved scene. Renaming a saved scene keeps its entity ID.
 1. Select targets and tunables (Dynamic, Per-light timing, brightness, ...).
 2. Click the **save** icon (floppy disk) at the top right.
 3. Pick the preset (defaults to the last tapped one), enter a name and click **Save**.
-   The current targets and tunables are stored with it.
-4. The scene shows up under **My scenes**. Tap the tile to activate it, use the trash icon to delete it.
+   The current targets and tunables are stored with it. Optionally set a **brightness per light**
+   (see below).
+4. The scene shows up under **My scenes**. Tap the tile to activate it.
+
+### Edit a saved scene
+
+Click the **pencil** on a tile under *My scenes*. The page loads the scene (targets, tunables) and
+opens the dialog with its preset, name and brightness per light. A banner shows which scene you
+are editing:
+
+- Change preset, name or brightness per light in the dialog and click **Save** (overwrites the
+  scene, its scene entity keeps its ID) or **Save as new**.
+- To change targets or tunables, close the dialog, change them on the page and click the save icon
+  again. **Stop editing** in the banner leaves the edit mode without saving.
+- **Delete** in the dialog deletes the scene.
+- Settings the panel does not show (`exclude`, `keep_groups`, `optional`) are listed in the dialog
+  and kept when saving.
+
+### Brightness per light
+
+The dialog lists every light the scene controls (with the same rules as the services: area, exclude,
+groups as one light, optional lights). Enter a brightness in percent for single lights, e.g. 5 % for
+a long LED strip that is much brighter than the other lights. Empty = the scene brightness.
+Stored as `light_brightness`, used by static and dynamic scenes and by lamp modes.
 
 ## Services
 
 | Service                              | Fields                                                                                                  |
 |--------------------------------------|---------------------------------------------------------------------------------------------------------|
-| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups`, `optional` and all fields of `apply_preset` / `start_dynamic_scene` |
+| `scene_presets.save_scene`           | `name`, `preset_id`, `targets`, optional `id` (overwrite), `dynamic`, `exclude`, `keep_groups`, `optional`, `light_brightness` and all fields of `apply_preset` / `start_dynamic_scene` |
 | `scene_presets.activate_saved_scene` | `id`, optional `dynamic` (override the saved mode), optional `targets` (apply to other lights)         |
 | `scene_presets.delete_saved_scene`   | `id` (also removes the scene entity)                                                                    |
 

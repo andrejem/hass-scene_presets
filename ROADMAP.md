@@ -54,12 +54,18 @@
 - [x] Used by the Tap Dial integration: button 2/4 cycles the room scenes on one lamp
 - [x] Tested in Home Assistant (Surimu panel in the living room, static and dynamic)
 
+## Phase 7 - Edit scenes, brightness per light  *(done, 2.9.0)*
+
+- [x] Pencil on saved scenes: load into the panel, save / save as new / delete
+- [x] `light_brightness` per scene: brightness in percent for single lights (groups apply to members)
+- [x] Websocket `scene_presets/resolve_targets` lists the lights of a scene for the dialog
+- [x] Tested in Home Assistant (panel UI test, Govee strips at 5 % in "Wohnzimmer Ruhephase")
+
 ## Ideas
 
 - [ ] Visual card editor (area picker)
 - [ ] Exclude list in the panel save dialog
 - [ ] Shorter light names in narrow rows (strip common prefixes)
 
-- [ ] Edit a saved scene in the panel (currently: overwrite via `save_scene` with `id`)
 - [ ] Use saved scenes in the Raumlicht integration
 - [ ] Replace the remaining `mwc-button` usages of upstream (no longer rendered in HA 2026.x)

@@ -3,6 +3,7 @@
 # Saved scenes: save/delete/activate services and a scene platform.
 # Optional exclude list, keep_groups and optional lights for apply_preset, start_dynamic_scene
 # and saved scenes. activate_saved_scene can apply a saved scene to other lights (targets).
+# Brightness per light (light_brightness).
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -23,6 +24,8 @@ PLATFORMS = ["scene"]
 
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
+LIGHT_BRIGHTNESS = vol.Schema({cv.entity_id: vol.All(vol.Coerce(float), vol.Range(min=1, max=100))})
+
 APPLY_PRESET_SCHEMA = vol.Schema({
     vol.Required(ATTR_SCENE_PRESET_ID): cv.string,
     vol.Required(ATTR_TARGETS): vol.Any(dict),
@@ -33,6 +36,7 @@ APPLY_PRESET_SCHEMA = vol.Schema({
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
     vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
+    vol.Optional(ATTR_LIGHT_BRIGHTNESS): LIGHT_BRIGHTNESS,
 })
 
 START_DYNAMIC_SCENE_SCHEMA = vol.Schema({
@@ -48,6 +52,7 @@ START_DYNAMIC_SCENE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
     vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
+    vol.Optional(ATTR_LIGHT_BRIGHTNESS): LIGHT_BRIGHTNESS,
 })
 
 
@@ -80,6 +85,7 @@ SAVE_SCENE_SCHEMA = vol.Schema({
     vol.Optional(ATTR_EXCLUDE): cv.entity_ids,
     vol.Optional(ATTR_KEEP_GROUPS): cv.entity_ids,
     vol.Optional(ATTR_OPTIONAL): cv.entity_ids,
+    vol.Optional(ATTR_LIGHT_BRIGHTNESS): LIGHT_BRIGHTNESS,
 })
 
 SAVED_SCENE_ID_SCHEMA = vol.Schema({
@@ -163,9 +169,13 @@ async def async_setup(hass, config):
             transition,
             shuffle,
             smart_shuffle,
-            brightness_override
+            brightness_override,
+            light_brightness=call.data.get(ATTR_LIGHT_BRIGHTNESS),
         )
-        optional_lights.register(optional_ids, light_entity_ids, preset_id, brightness_override)
+        optional_lights.register(
+            optional_ids, light_entity_ids, preset_id, brightness_override,
+            light_brightness=call.data.get(ATTR_LIGHT_BRIGHTNESS),
+        )
 
 
     async def start_dynamic_scene(call):
@@ -203,7 +213,8 @@ async def async_setup(hass, config):
             "light_entity_ids": light_entity_ids + optional_on,
             "brightness": brightness_override,
             "transition": transition,
-            "shuffle": shuffle
+            "shuffle": shuffle,
+            ATTR_LIGHT_BRIGHTNESS: call.data.get(ATTR_LIGHT_BRIGHTNESS),
         }
 
         range_attrs = (ATTR_INTERVAL_MIN, ATTR_INTERVAL_MAX, ATTR_TRANSITION_MIN, ATTR_TRANSITION_MAX)
@@ -214,7 +225,10 @@ async def async_setup(hass, config):
             parameters[ATTR_TRANSITION_RANGE] = _build_range(call.data, ATTR_TRANSITION_MIN, ATTR_TRANSITION_MAX, transition)
 
         result = dynamic_scene_manager.create_new(hass, parameters, interval)
-        optional_lights.register(optional_ids, light_entity_ids, preset_id, brightness_override, result["id"])
+        optional_lights.register(
+            optional_ids, light_entity_ids, preset_id, brightness_override, result["id"],
+            light_brightness=call.data.get(ATTR_LIGHT_BRIGHTNESS),
+        )
         return result
 
     async def stop_dynamic_scene(call):

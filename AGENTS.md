@@ -21,6 +21,9 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
   - `presets.py` - applies a preset to a list of light entities
   - `color_management.py`, `color_temperature.py` - color selection and CT fallback
   - `view.py`, `websocket_api.py` - panel registration, static assets, websocket commands
+    (fork: `get_saved_scenes`, `resolve_targets`)
+    Panel and room card URLs carry a hash of the file (`?<hash>`), so a new build is loaded
+    without a version bump or browser cache clearing.
   - `presets.json`, `assets/` - built-in presets and their images
   - `frontend/scene_presets_panel.js` - **built** panel bundle, committed to the repo
   - `frontend/scene-presets-room-card.js` - room card (plain JS, no build step), served and

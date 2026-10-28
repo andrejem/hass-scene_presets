@@ -1,4 +1,5 @@
-// Modified by andrejem (2026): per-light timing controls and saved scenes ("My scenes", save dialog)
+// Modified by andrejem (2026): per-light timing controls and saved scenes ("My scenes", save dialog),
+// editing saved scenes and brightness per light
 
 import React, {useEffect, useMemo, useState} from "react";
 import {PresetTile} from "../components/PresetTile";
@@ -238,6 +239,9 @@ export const PresetApplyPage: React.FunctionComponent<{
     const [saveSceneName, setSaveSceneName] = useState<string>("");
     const [saveSceneError, setSaveSceneError] = useState<string>("");
     const [savePresetId, setSavePresetId] = useState<string>("");
+    const [editingScene, setEditingScene] = useState<any>(null);
+    const [lightBrightness, setLightBrightness] = useState<{[entityId: string]: number}>({});
+    const [sceneLights, setSceneLights] = useState<Array<{entity_id: string, name: string, optional: boolean}>>([]);
     const [lastActionPayload, setLastActionPayload] = useState<any>({});
     const [prettyLastActionPayload, setPrettyLastActionPayload] = useState<string>("");
 
@@ -339,29 +343,121 @@ export const PresetApplyPage: React.FunctionComponent<{
         });
     }, [hass, setSavedScenes]);
 
-    const handleSaveScene = React.useCallback(() => {
+    const handleSaveScene = React.useCallback((asNew = false) => {
         const name = saveSceneName.trim();
         if (!name || !savePresetId || !hasTargets) {
             return;
         }
 
         const {service, payload: actionPayload} = buildAction(savePresetId);
-        const payload = {
+        const payload: any = {
             ...actionPayload,
             name: name,
             dynamic: service === "start_dynamic_scene"
         };
+        if (editingScene) {
+            if (!asNew) {
+                payload.id = editingScene.id;
+            }
+            // Settings the panel does not show are kept as they are
+            ["exclude", "keep_groups", "optional"].forEach(key => {
+                if (editingScene[key] !== undefined) {
+                    payload[key] = editingScene[key];
+                }
+            });
+        }
+        const perLight: {[entityId: string]: number} = {};
+        Object.entries(lightBrightness).forEach(([entityId, value]) => {
+            if (typeof value === "number" && value >= 1 && value <= 100) {
+                perLight[entityId] = Math.round(value);
+            }
+        });
+        if (Object.keys(perLight).length > 0) {
+            payload.light_brightness = perLight;
+        }
         Object.keys(payload).forEach(k => payload[k] === undefined && delete payload[k]);
 
         hass.callService("scene_presets", "save_scene", payload).then(() => {
             setSaveDialogOpen(false);
             setSaveSceneName("");
             setSaveSceneError("");
+            setEditingScene(null);
+            setLightBrightness({});
             fetchSavedScenes();
         }).catch(err => {
             setSaveSceneError(err?.message ?? String(err));
         });
-    }, [hass, saveSceneName, savePresetId, hasTargets, buildAction, fetchSavedScenes]);
+    }, [hass, saveSceneName, savePresetId, hasTargets, buildAction, fetchSavedScenes, editingScene, lightBrightness]);
+
+    const handleSavedSceneEdit = React.useCallback((id: string) => {
+        const scene = savedScenes.find(s => s.id === id);
+        if (!scene) {
+            return;
+        }
+        // Load the saved scene into the page: targets, tunables, preset, name, brightness per light
+        setTargets(scene.targets ?? {});
+        setCustomBrightness(scene.brightness !== undefined && scene.brightness !== null);
+        if (scene.brightness !== undefined && scene.brightness !== null) {
+            setCustomBrightnessValue(scene.brightness);
+        }
+        setDynamic(!!scene.dynamic);
+        if (scene.dynamic) {
+            const perLightTiming = ["interval_min", "interval_max", "transition_min", "transition_max"].some(k => scene[k] !== undefined);
+            setDynamicPerLight(perLightTiming);
+            if (perLightTiming) {
+                setDynamicIntervalMin(scene.interval_min ?? DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMin);
+                setDynamicIntervalMax(scene.interval_max ?? DEFAULT_TUNABLE_SETTINGS.dynamicIntervalMax);
+                setDynamicTransitionMin(scene.transition_min ?? DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMin);
+                setDynamicTransitionMax(scene.transition_max ?? DEFAULT_TUNABLE_SETTINGS.dynamicTransitionMax);
+            } else {
+                setDynamicIntervalValue(scene.interval ?? DEFAULT_TUNABLE_SETTINGS.dynamicIntervalValue);
+                setDynamicTransitionValue(scene.transition ?? DEFAULT_TUNABLE_SETTINGS.dynamicTransitionValue);
+            }
+        } else {
+            setShuffle(!!scene.shuffle);
+            setSmartShuffle(!!scene.smart_shuffle);
+            setCustomTransition(scene.transition !== undefined && scene.transition !== null);
+            if (scene.transition !== undefined && scene.transition !== null) {
+                setCustomTransitionValue(scene.transition);
+            }
+        }
+        setSavePresetId(scene.preset_id);
+        setSaveSceneName(scene.name);
+        setLightBrightness(scene.light_brightness ?? {});
+        setEditingScene(scene);
+        setSaveSceneError("");
+        setSaveDialogOpen(true);
+    }, [
+        savedScenes, setTargets, setCustomBrightness, setCustomBrightnessValue, setDynamic, setDynamicPerLight,
+        setDynamicIntervalMin, setDynamicIntervalMax, setDynamicTransitionMin, setDynamicTransitionMax,
+        setDynamicIntervalValue, setDynamicTransitionValue, setShuffle, setSmartShuffle,
+        setCustomTransition, setCustomTransitionValue
+    ]);
+
+    const stopEditing = React.useCallback(() => {
+        setEditingScene(null);
+        setLightBrightness({});
+        setSaveSceneName("");
+    }, []);
+
+    // Lights of the scene for "brightness per light" (resolved by the backend with the same rules)
+    useEffect(() => {
+        if (!saveDialogOpen || !hasTargets) {
+            setSceneLights([]);
+            return;
+        }
+        const msg: any = {type: "scene_presets/resolve_targets", targets: targets};
+        ["exclude", "keep_groups", "optional"].forEach(key => {
+            if (editingScene?.[key] !== undefined) {
+                msg[key] = editingScene[key];
+            }
+        });
+        hass.callWS(msg).then(result => {
+            setSceneLights(result?.lights ?? []);
+        }).catch(() => {
+            setSceneLights([]);
+        });
+    }, [saveDialogOpen, targets, editingScene]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const handleSavedSceneTap = React.useCallback((id: string) => {
         hass.callService(
@@ -384,9 +480,14 @@ export const PresetApplyPage: React.FunctionComponent<{
             "delete_saved_scene",
             {id: id}
         ).finally(() => {
+            if (editingScene?.id === id) {
+                setEditingScene(null);
+                setLightBrightness({});
+                setSaveDialogOpen(false);
+            }
             fetchSavedScenes();
         });
-    }, [hass, savedScenes, fetchSavedScenes]);
+    }, [hass, savedScenes, fetchSavedScenes, editingScene]);
 
     useEffect(() => {
         fetchSavedScenes();
@@ -545,7 +646,9 @@ export const PresetApplyPage: React.FunctionComponent<{
                                         icon={"mdi:content-save"}
                                         onClick={
                                             () => {
-                                                setSavePresetId(lastActionPayload?.data?.preset_id ?? favoritePresets[0] ?? presets[0]?.id ?? "");
+                                                if (!editingScene) {
+                                                    setSavePresetId(lastActionPayload?.data?.preset_id ?? favoritePresets[0] ?? presets[0]?.id ?? "");
+                                                }
                                                 setSaveSceneError("");
                                                 setSaveDialogOpen(true);
                                             }
@@ -567,6 +670,33 @@ export const PresetApplyPage: React.FunctionComponent<{
                                 </div>
                             </div>
                         </span>
+                        {
+                            editingScene &&
+                            <div
+                                className={"editing-scene-banner"}
+                                style={{
+                                    marginTop: "1rem",
+                                    padding: "0.5rem 0.75rem",
+                                    borderRadius: "8px",
+                                    background: "rgba(var(--rgb-primary-color, 3, 169, 244), 0.12)",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "space-between",
+                                    gap: "0.5rem"
+                                }}
+                            >
+                                <span>
+                                    Editing <b>{editingScene.name}</b>: change targets and tunables, then click the save icon.
+                                </span>
+                                <button
+                                    className={"editing-scene-stop"}
+                                    style={DIALOG_BUTTON_STYLE}
+                                    onClick={() => stopEditing()}
+                                >
+                                    Stop editing
+                                </button>
+                            </div>
+                        }
                         <div
                             style={{
                                 marginTop: "1rem"
@@ -812,9 +942,9 @@ export const PresetApplyPage: React.FunctionComponent<{
                                         onClick={(id) => {
                                             handleSavedSceneTap(id);
                                         }}
-                                        actionIcon={"mdi:delete"}
+                                        actionIcon={"mdi:pencil"}
                                         onActionClick={(id) => {
-                                            handleSavedSceneDelete(id);
+                                            handleSavedSceneEdit(id);
                                         }}
                                     />;
                                 })
@@ -935,13 +1065,26 @@ export const PresetApplyPage: React.FunctionComponent<{
                     onClose={() => {
                         setSaveDialogOpen(false);
                     }}
-                    heading={"Save scene"}
+                    heading={editingScene ? `Edit scene "${editingScene.name}"` : "Save scene"}
                 >
                     <div>
                         Saves the selected preset together with the current targets and tunables
                         {dynamic ? (dynamicPerLight ? " (dynamic, per-light timing)" : " (dynamic)") : ""}.
                         The saved scene shows up under &quot;My scenes&quot; and as a scene entity in Home Assistant.
+                        {
+                            editingScene &&
+                            <> The page now shows the targets and tunables of this scene: close this dialog to change
+                                them, then click the save icon again.</>
+                        }
                     </div>
+                    {
+                        editingScene && ["exclude", "keep_groups", "optional"].some(k => editingScene[k]?.length) &&
+                        <div style={{marginTop: "0.5rem", fontSize: "0.9rem", opacity: 0.8}}>
+                            {editingScene.exclude?.length ? <div>Excluded: {editingScene.exclude.join(", ")}</div> : null}
+                            {editingScene.keep_groups?.length ? <div>As one light: {editingScene.keep_groups.join(", ")}</div> : null}
+                            {editingScene.optional?.length ? <div>Only if on: {editingScene.optional.join(", ")}</div> : null}
+                        </div>
+                    }
                     <div style={{marginTop: "1rem"}}>
                         <select
                             className={"save-scene-preset"}
@@ -977,12 +1120,56 @@ export const PresetApplyPage: React.FunctionComponent<{
                             onChange={(e) => setSaveSceneName(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") {
-                                    handleSaveScene();
+                                    handleSaveScene(false);
                                 }
                             }}
                             style={DIALOG_INPUT_STYLE}
                         />
                     </div>
+                    {
+                        sceneLights.length > 0 &&
+                        <div className={"save-scene-light-brightness"} style={{marginTop: "1rem"}}>
+                            <div style={{fontWeight: 500, marginBottom: "0.25rem"}}>Brightness per light</div>
+                            <div style={{fontSize: "0.85rem", opacity: 0.8, marginBottom: "0.5rem"}}>
+                                Optional, in percent. Empty = scene brightness
+                                {customBrightness ? ` (${Math.round(customBrightnessValue * 100 / 255)} %)` : ""}.
+                            </div>
+                            <div style={{maxHeight: "40vh", overflowY: "auto"}}>
+                                {
+                                    sceneLights.map(light => {
+                                        const value = lightBrightness[light.entity_id];
+                                        return <div
+                                            key={"lb_" + light.entity_id}
+                                            style={{display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.2rem 0"}}
+                                        >
+                                            <span style={{flex: 1}}>
+                                                {light.name}{light.optional ? " (only if on)" : ""}
+                                            </span>
+                                            <input
+                                                type={"number"}
+                                                min={1}
+                                                max={100}
+                                                placeholder={"–"}
+                                                value={value === undefined ? "" : value}
+                                                onChange={(e) => {
+                                                    const raw = e.target.value;
+                                                    const next = {...lightBrightness};
+                                                    if (raw === "") {
+                                                        delete next[light.entity_id];
+                                                    } else {
+                                                        next[light.entity_id] = Math.max(1, Math.min(100, Number(raw)));
+                                                    }
+                                                    setLightBrightness(next);
+                                                }}
+                                                style={{...DIALOG_INPUT_STYLE, width: "5.5rem", padding: "0.4rem"}}
+                                            />
+                                            <span>%</span>
+                                        </div>;
+                                    })
+                                }
+                            </div>
+                        </div>
+                    }
                     {
                         saveSceneError &&
                         <div style={{marginTop: "0.5rem", color: "var(--error-color, #db4437)"}}>
@@ -997,6 +1184,18 @@ export const PresetApplyPage: React.FunctionComponent<{
                             marginTop: "1.5rem"
                         }}
                     >
+                        {
+                            editingScene &&
+                            <button
+                                className={"save-scene-delete"}
+                                style={{...DIALOG_BUTTON_STYLE, color: "var(--error-color, #db4437)", marginRight: "auto"}}
+                                onClick={() => {
+                                    handleSavedSceneDelete(editingScene.id);
+                                }}
+                            >
+                                Delete
+                            </button>
+                        }
                         <button
                             className={"save-scene-cancel"}
                             style={DIALOG_BUTTON_STYLE}
@@ -1004,8 +1203,21 @@ export const PresetApplyPage: React.FunctionComponent<{
                                 setSaveDialogOpen(false);
                             }}
                         >
-                            Cancel
+                            {editingScene ? "Close" : "Cancel"}
                         </button>
+                        {
+                            editingScene &&
+                            <button
+                                className={"save-scene-as-new"}
+                                disabled={!saveSceneName.trim() || !savePresetId || !hasTargets}
+                                style={DIALOG_BUTTON_STYLE}
+                                onClick={() => {
+                                    handleSaveScene(true);
+                                }}
+                            >
+                                Save as new
+                            </button>
+                        }
                         <button
                             className={"save-scene-confirm"}
                             disabled={!saveSceneName.trim() || !savePresetId || !hasTargets}
@@ -1016,7 +1228,7 @@ export const PresetApplyPage: React.FunctionComponent<{
                                 opacity: (!saveSceneName.trim() || !savePresetId || !hasTargets) ? 0.5 : 1
                             }}
                             onClick={() => {
-                                handleSaveScene();
+                                handleSaveScene(false);
                             }}
                         >
                             Save

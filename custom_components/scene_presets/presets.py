@@ -1,9 +1,12 @@
+# Modified by andrejem (2026): optional brightness per light (light_brightness).
+
 import voluptuous as vol
 import asyncio
 import logging
 from .file_utils import PRESET_DATA
 from .color_management import *
 from .color_temperature import find_closest_ct_match
+from .util import light_brightness_for
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -15,7 +18,8 @@ async def apply_preset(
     transition,
     shuffle,
     smart_shuffle,
-    brightness_override=None
+    brightness_override=None,
+    light_brightness=None,
 ):
     preset_data = None
     for preset in PRESET_DATA.get("presets", []):
@@ -39,7 +43,7 @@ async def apply_preset(
 
     for index, entity_id in enumerate(light_entity_ids):
         light_params = {
-            "brightness": brightness,
+            "brightness": light_brightness_for(hass, entity_id, light_brightness, brightness),
             "transition": transition,
             "entity_id": entity_id,
         }

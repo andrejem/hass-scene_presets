@@ -41,3 +41,5 @@ ATTR_DYNAMIC = "dynamic"
 ATTR_EXCLUDE = "exclude"
 ATTR_KEEP_GROUPS = "keep_groups"
 ATTR_OPTIONAL = "optional"
+# Brightness per light in a scene: {entity_id: percent 1-100}, overrides the scene brightness
+ATTR_LIGHT_BRIGHTNESS = "light_brightness"
