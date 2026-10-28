@@ -104,6 +104,11 @@ to other lights (`targets`), e.g. to give one lamp its own mode; that lamp leave
 scene while the other lights keep going. Segment lights of Zigbee2MQTT/Govee strips are
 skipped automatically for area targets. Details: [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
+**Edit saved scenes, brightness per light** – The pencil on a saved scene loads it into the panel
+for editing (save, save as new, delete). In the save dialog every light of the scene can get its own
+brightness, e.g. a long LED strip at 5 % (`light_brightness`). Details:
+[docs/Saved scenes.md](docs/Saved%20scenes.md)
+
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer
 rendered by recent Home Assistant versions.
 

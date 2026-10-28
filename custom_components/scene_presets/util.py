@@ -1,5 +1,5 @@
 # Modified by andrejem (2026): filter_targets() for the exclude list, groups kept as one light
-# and segment lights.
+# and segment lights. Brightness per light (light_brightness).
 
 import re
 from homeassistant.helpers import entity_registry, device_registry, area_registry
@@ -159,3 +159,28 @@ def filter_targets(hass, light_entity_ids, explicit_entity_ids, exclude, keep_gr
         if group_id not in result:
             result.append(group_id)
     return result
+
+
+def light_brightness_for(hass, entity_id, light_brightness, default):
+    """Brightness (0-255) for one light: its own percent from ``light_brightness`` or the default.
+
+    A light inside a group that has a value uses the group's value; a group without own value
+    uses the value of its first member that has one.
+    """
+    if not light_brightness:
+        return default
+    percent = light_brightness.get(entity_id)
+    if percent is None:
+        for key, value in light_brightness.items():
+            if key != entity_id and entity_id in resolve_entity_ids(hass, key):
+                percent = value
+                break
+    if percent is None:
+        state = hass.states.get(entity_id)
+        for member in (state.attributes.get("entity_id", []) if state else []):
+            if member in light_brightness:
+                percent = light_brightness[member]
+                break
+    if percent is None:
+        return default
+    return max(1, min(255, round(float(percent) * 255 / 100)))

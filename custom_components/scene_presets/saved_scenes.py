@@ -30,6 +30,7 @@ SCENE_SETTING_KEYS = (
     "exclude",
     "keep_groups",
     "optional",
+    "light_brightness",
 )
 
 
