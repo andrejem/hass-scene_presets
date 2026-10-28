@@ -1,4 +1,6 @@
-# Modified by andrejem (2026): serves and auto-loads the room card (scene-presets-room-card)
+# Modified by andrejem (2026): serves and auto-loads the room card (scene-presets-room-card);
+# frontend URLs carry a hash of the file, so browsers load a new build without a version bump
+import hashlib
 from .const import NAME, DOMAIN, PANEL_URL, ROOM_CARD_URL
 from .file_utils import VERSION, PRESET_DATA, BASE_PATH
 from homeassistant.components.http import HomeAssistantView, StaticPathConfig
@@ -23,7 +25,19 @@ class ScenePresetDataView(HomeAssistantView):
             result=PRESET_DATA,
         )
 
+def _file_hash(path):
+    try:
+        with open(path, "rb") as file:
+            return hashlib.sha1(file.read()).hexdigest()[:10]
+    except OSError:
+        return VERSION
+
+
 async def async_setup_view(hass):
+    panel_path = hass.config.path(f'{BASE_PATH}/frontend/scene_presets_panel.js')
+    card_path = hass.config.path(f'{BASE_PATH}/frontend/scene-presets-room-card.js')
+    panel_hash = await hass.async_add_executor_job(_file_hash, panel_path)
+    card_hash = await hass.async_add_executor_job(_file_hash, card_path)
     static_paths = [
         StaticPathConfig(PANEL_URL, hass.config.path(f'{BASE_PATH}/frontend/scene_presets_panel.js'), True),
         StaticPathConfig(f'/assets/{DOMAIN}/iconset.js', hass.config.path(f'{BASE_PATH}/res/iconset.js'), True),
@@ -36,7 +50,7 @@ async def async_setup_view(hass):
 
     hass.http.register_view(ScenePresetDataView)
     add_extra_js_url(hass, f"/assets/{DOMAIN}/iconset.js?{VERSION}")
-    add_extra_js_url(hass, f"{ROOM_CARD_URL}?{VERSION}")
+    add_extra_js_url(hass, f"{ROOM_CARD_URL}?{card_hash}")
 
     async_register_built_in_panel(
         hass,
@@ -48,7 +62,7 @@ async def async_setup_view(hass):
         config={
             "_panel_custom": {
                 "name": "scene-presets-panel",
-                "module_url": f"{PANEL_URL}?{VERSION}"
+                "module_url": f"{PANEL_URL}?{panel_hash}"
             },
             "version": VERSION
         },
