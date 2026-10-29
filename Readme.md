@@ -106,7 +106,8 @@ skipped automatically for area targets. Details: [docs/Saved scenes.md](docs/Sav
 
 **Edit saved scenes, brightness per light** – The pencil on a saved scene loads it into the panel
 for editing (save, save as new, delete). In the save dialog every light of the scene can get its own
-brightness, e.g. a long LED strip at 5 % (`light_brightness`). Details:
+brightness, e.g. a long LED strip at 5 % (`light_brightness`). 0 % turns a light off when the
+scene starts, so the room looks the same no matter which scene ran before. Details:
 [docs/Saved scenes.md](docs/Saved%20scenes.md)
 
 **Home Assistant 2026.x** – Dialog buttons are plain buttons, because `mwc-button` is no longer

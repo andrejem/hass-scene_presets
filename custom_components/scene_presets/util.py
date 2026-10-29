@@ -1,5 +1,5 @@
 # Modified by andrejem (2026): filter_targets() for the exclude list, groups kept as one light
-# and segment lights. Brightness per light (light_brightness).
+# and segment lights. Brightness per light (light_brightness), 0 % = off when the scene starts.
 
 import re
 from homeassistant.helpers import entity_registry, device_registry, area_registry
@@ -161,14 +161,14 @@ def filter_targets(hass, light_entity_ids, explicit_entity_ids, exclude, keep_gr
     return result
 
 
-def light_brightness_for(hass, entity_id, light_brightness, default):
-    """Brightness (0-255) for one light: its own percent from ``light_brightness`` or the default.
+def light_percent_for(hass, entity_id, light_brightness):
+    """Percent from ``light_brightness`` for one light, or None when it has no own value.
 
     A light inside a group that has a value uses the group's value; a group without own value
     uses the value of its first member that has one.
     """
     if not light_brightness:
-        return default
+        return None
     percent = light_brightness.get(entity_id)
     if percent is None:
         for key, value in light_brightness.items():
@@ -181,6 +181,36 @@ def light_brightness_for(hass, entity_id, light_brightness, default):
             if member in light_brightness:
                 percent = light_brightness[member]
                 break
-    if percent is None:
+    return None if percent is None else float(percent)
+
+
+def light_brightness_for(hass, entity_id, light_brightness, default):
+    """Brightness (0-255) for one light: its own percent from ``light_brightness`` or the default.
+
+    0 % means "off when the scene starts"; a light with 0 % that is turned on later (optional
+    light, lamp mode) gets the default brightness.
+    """
+    percent = light_percent_for(hass, entity_id, light_brightness)
+    if percent is None or percent <= 0:
         return default
-    return max(1, min(255, round(float(percent) * 255 / 100)))
+    return max(1, min(255, round(percent * 255 / 100)))
+
+
+def split_off(hass, light_entity_ids, light_brightness):
+    """Split lights into (lights to turn on, lights with 0 % that the scene turns off)."""
+    on, off = [], []
+    for entity_id in light_entity_ids:
+        percent = light_percent_for(hass, entity_id, light_brightness)
+        (off if percent is not None and percent <= 0 else on).append(entity_id)
+    return on, off
+
+
+async def turn_off_lights(hass, light_entity_ids, transition):
+    """Turn off the lights a scene switches off (0 % brightness)."""
+    if not light_entity_ids:
+        return
+    await hass.services.async_call(
+        "light", "turn_off",
+        {"entity_id": list(light_entity_ids), "transition": transition},
+        blocking=False,
+    )
