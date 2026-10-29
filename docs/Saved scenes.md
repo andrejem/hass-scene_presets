@@ -38,6 +38,12 @@ groups as one light, optional lights). Enter a brightness in percent for single 
 a long LED strip that is much brighter than the other lights. Empty = the scene brightness.
 Stored as `light_brightness`, used by static and dynamic scenes and by lamp modes.
 
+**0 % = off:** a light with 0 % is turned off when the scene starts (static and dynamic). This only
+happens at the start: the light can be turned on again afterwards. An optional light with 0 % that is
+turned on joins the scene with the scene brightness. A lamp mode (`activate_saved_scene` with
+`targets`) ignores 0 % and turns the lamp on with the scene brightness. Excluded lights (`exclude`)
+are never touched.
+
 ## Services
 
 | Service                              | Fields                                                                                                  |

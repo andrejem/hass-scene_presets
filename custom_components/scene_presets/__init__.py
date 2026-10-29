@@ -3,7 +3,7 @@
 # Saved scenes: save/delete/activate services and a scene platform.
 # Optional exclude list, keep_groups and optional lights for apply_preset, start_dynamic_scene
 # and saved scenes. activate_saved_scene can apply a saved scene to other lights (targets).
-# Brightness per light (light_brightness).
+# Brightness per light (light_brightness), 0 % turns the light off when the scene starts.
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -15,7 +15,7 @@ from .const import *
 from .dynamic_scenes import DynamicScene, DynamicSceneManager
 from .presets import apply_preset
 from .view import async_setup_view, async_remove_view
-from .util import ensure_list, resolve_targets, filter_targets, resolve_entity_ids
+from .util import ensure_list, resolve_targets, filter_targets, resolve_entity_ids, split_off, turn_off_lights
 from .websocket_api import async_setup_websocket_api
 from .saved_scenes import SavedSceneStore, build_service_call
 from .optional_lights import OptionalLights, split_optional
@@ -24,7 +24,8 @@ PLATFORMS = ["scene"]
 
 CONFIG_SCHEMA = cv.empty_config_schema(DOMAIN)
 
-LIGHT_BRIGHTNESS = vol.Schema({cv.entity_id: vol.All(vol.Coerce(float), vol.Range(min=1, max=100))})
+# 0 = the light is turned off when the scene starts
+LIGHT_BRIGHTNESS = vol.Schema({cv.entity_id: vol.All(vol.Coerce(float), vol.Range(min=0, max=100))})
 
 APPLY_PRESET_SCHEMA = vol.Schema({
     vol.Required(ATTR_SCENE_PRESET_ID): cv.string,
@@ -161,6 +162,10 @@ async def async_setup(hass, config):
             hass, light_entity_ids, call.data.get(ATTR_OPTIONAL), call.data.get(ATTR_KEEP_GROUPS)
         )
         optional_lights.forget_overlapping(light_entity_ids, optional_ids)
+        light_brightness = call.data.get(ATTR_LIGHT_BRIGHTNESS)
+        light_entity_ids, off_ids = split_off(hass, light_entity_ids, light_brightness)
+        optional_on, optional_off = split_off(hass, optional_on, light_brightness)
+        await turn_off_lights(hass, off_ids + optional_off, transition)
 
         await apply_preset(
             hass,
@@ -207,6 +212,10 @@ async def async_setup(hass, config):
             hass, light_entity_ids, call.data.get(ATTR_OPTIONAL), call.data.get(ATTR_KEEP_GROUPS)
         )
         optional_lights.forget_overlapping(light_entity_ids, optional_ids)
+        light_brightness = call.data.get(ATTR_LIGHT_BRIGHTNESS)
+        light_entity_ids, off_ids = split_off(hass, light_entity_ids, light_brightness)
+        optional_on, optional_off = split_off(hass, optional_on, light_brightness)
+        await turn_off_lights(hass, off_ids + optional_off, transition)
 
         parameters = {
             "preset_id": preset_id,
@@ -294,6 +303,11 @@ async def async_setup(hass, config):
             for key in (ATTR_EXCLUDE, ATTR_KEEP_GROUPS, ATTR_OPTIONAL):
                 service_data.pop(key, None)
             service_data[ATTR_TARGETS] = override
+            # A lamp mode turns these lamps on: 0 % (off) does not apply, they get the scene brightness
+            if service_data.get(ATTR_LIGHT_BRIGHTNESS):
+                service_data[ATTR_LIGHT_BRIGHTNESS] = {
+                    key: value for key, value in service_data[ATTR_LIGHT_BRIGHTNESS].items() if value > 0
+                }
             override_entity_ids = ensure_list(override.get("entity_id"))
             lights = filter_targets(
                 hass,

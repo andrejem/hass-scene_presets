@@ -19,6 +19,7 @@ Fork goals are tracked in [ROADMAP.md](ROADMAP.md).
   - `scene.py` - scene platform, one entity per saved scene (fork)
   - `optional_lights.py` - optional lights that join an active scene when turned on (fork)
   - `presets.py` - applies a preset to a list of light entities
+  - `util.py` - target resolution, exclude / keep_groups, brightness per light (0 % = off at start)
   - `color_management.py`, `color_temperature.py` - color selection and CT fallback
   - `view.py`, `websocket_api.py` - panel registration, static assets, websocket commands
     (fork: `get_saved_scenes`, `resolve_targets`)

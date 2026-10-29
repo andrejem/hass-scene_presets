@@ -1,5 +1,5 @@
 // Modified by andrejem (2026): per-light timing controls and saved scenes ("My scenes", save dialog),
-// editing saved scenes and brightness per light
+// editing saved scenes and brightness per light (0 % = off when the scene starts)
 
 import React, {useEffect, useMemo, useState} from "react";
 import {PresetTile} from "../components/PresetTile";
@@ -368,7 +368,7 @@ export const PresetApplyPage: React.FunctionComponent<{
         }
         const perLight: {[entityId: string]: number} = {};
         Object.entries(lightBrightness).forEach(([entityId, value]) => {
-            if (typeof value === "number" && value >= 1 && value <= 100) {
+            if (typeof value === "number" && value >= 0 && value <= 100) {
                 perLight[entityId] = Math.round(value);
             }
         });
@@ -1133,6 +1133,7 @@ export const PresetApplyPage: React.FunctionComponent<{
                             <div style={{fontSize: "0.85rem", opacity: 0.8, marginBottom: "0.5rem"}}>
                                 Optional, in percent. Empty = scene brightness
                                 {customBrightness ? ` (${Math.round(customBrightnessValue * 100 / 255)} %)` : ""}.
+                                {" "}0 = turned off when the scene starts.
                             </div>
                             <div style={{maxHeight: "40vh", overflowY: "auto"}}>
                                 {
@@ -1147,7 +1148,7 @@ export const PresetApplyPage: React.FunctionComponent<{
                                             </span>
                                             <input
                                                 type={"number"}
-                                                min={1}
+                                                min={0}
                                                 max={100}
                                                 placeholder={"–"}
                                                 value={value === undefined ? "" : value}
@@ -1157,7 +1158,7 @@ export const PresetApplyPage: React.FunctionComponent<{
                                                     if (raw === "") {
                                                         delete next[light.entity_id];
                                                     } else {
-                                                        next[light.entity_id] = Math.max(1, Math.min(100, Number(raw)));
+                                                        next[light.entity_id] = Math.max(0, Math.min(100, Number(raw)));
                                                     }
                                                     setLightBrightness(next);
                                                 }}

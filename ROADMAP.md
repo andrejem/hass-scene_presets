@@ -61,6 +61,13 @@
 - [x] Websocket `scene_presets/resolve_targets` lists the lights of a scene for the dialog
 - [x] Tested in Home Assistant (panel UI test, Govee strips at 5 % in "Wohnzimmer Ruhephase")
 
+## Phase 8 - 0 % = off  *(done, 2.9.1)*
+
+- [x] `light_brightness` accepts 0: the light is turned off when the scene starts (static and dynamic)
+- [x] Lights with 0 % can be turned on again afterwards; optional lights and lamp modes use the scene brightness
+- [x] Panel: brightness per light accepts 0
+- [x] Tested in Home Assistant ("Wohnzimmer Ruhephase": Govee and Signe at 0 %, lamp mode turns Signe on)
+
 ## Ideas
 
 - [ ] Visual card editor (area picker)
